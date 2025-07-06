@@ -1,153 +1,374 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import Header from "../components/Header"
+
+// TypeScript interfaces
+interface LoginFormData {
+  email: string
+  password: string
+  rememberMe: boolean
+}
+
+interface LoginErrors {
+  email?: string
+  password?: string
+  general?: string
+}
+
+interface LoginData {
+  user_id: string
+  password: string
+  tenant_id: string
+}
+
+interface LoginResponse {
+  statusCode: number
+  body:
+    | {
+        token?: string
+        user_id?: string
+        tenant_id?: string
+      }
+    | string
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: "",
+    password: "",
+    rememberMe: false,
+  })
+  const [errors, setErrors] = useState<LoginErrors>({})
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [showEmailForm, setShowEmailForm] = useState<boolean>(true)
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }))
+
+    // Clear error when user starts typing
+    if (errors[name as keyof LoginErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }))
+    }
+  }
+
+  const validateForm = (): LoginErrors => {
+    const newErrors: LoginErrors = {}
+
+    if (!formData.email.trim()) {
+      newErrors.email = "El correo electrónico es requerido"
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Ingresa un correo electrónico válido"
+    }
+
+    if (!formData.password) {
+      newErrors.password = "La contraseña es requerida"
+    }
+
+    return newErrors
+  }
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Aquí iría la lógica de autenticación
-    console.log('Login attempt with:', { email, password })
+
+    const newErrors = validateForm()
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setIsLoading(true)
+    setErrors({})
+
+    try {
+      // Prepare data for your Lambda API
+      const loginData: LoginData = {
+        user_id: formData.email,
+        password: formData.password,
+        tenant_id: "default_tenant", // You might want to make this dynamic
+      }
+
+      // Call your Lambda API
+      const response = await fetch("https://7jhs634u92.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      })
+
+      const result: LoginResponse = await response.json()
+
+      if (response.ok && result.statusCode === 200) {
+        // Login successful
+        const responseBody = result.body as { token: string; user_id: string; tenant_id: string }
+
+        // Store token in localStorage or sessionStorage
+        if (formData.rememberMe) {
+          localStorage.setItem("authToken", responseBody.token)
+          localStorage.setItem("userId", responseBody.user_id)
+          localStorage.setItem("tenantId", responseBody.tenant_id)
+        } else {
+          sessionStorage.setItem("authToken", responseBody.token)
+          sessionStorage.setItem("userId", responseBody.user_id)
+          sessionStorage.setItem("tenantId", responseBody.tenant_id)
+        }
+
+        // Redirect to dashboard
+        window.location.href = "/dashboard"
+      } else {
+        // Handle API errors
+        let errorMessage = "Error en el inicio de sesión"
+
+        if (result.statusCode === 403) {
+          if (typeof result.body === "string") {
+            if (result.body === "Usuario no existe") {
+              errorMessage = "No existe una cuenta con este correo electrónico"
+            } else if (result.body === "Password incorrecto") {
+              errorMessage = "La contraseña es incorrecta"
+            }
+          }
+        }
+
+        setErrors({ general: errorMessage })
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      setErrors({
+        general: "Error de conexión. Por favor intenta nuevamente.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSocialLogin = (provider: string): void => {
+    console.log(`Login with ${provider}`)
+    alert(`Funcionalidad de ${provider} próximamente`)
+  }
+
+  const handleShowEmailForm = (): void => {
+    setShowEmailForm(true)
+  }
+
+  const handleBackToMain = (): void => {
+    setShowEmailForm(false)
+    setErrors({})
+    setFormData({ email: "", password: "", rememberMe: false })
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <Link to="/" className="flex justify-center">
-            <h1 className="text-3xl font-bold text-purple-600">udemy</h1>
-          </Link>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Inicia sesión en tu cuenta
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            O{' '}
-            <Link to="/register" className="font-medium text-purple-600 hover:text-purple-500">
-              regístrate si aún no tienes una cuenta
-            </Link>
-          </p>
+    <div className="min-h-screen bg-white">
+      <Header />
+
+      <div className="min-h-screen flex">
+        {/* Left side - Illustration */}
+        <div className="hidden lg:flex lg:w-1/2 bg-white items-center justify-center p-8">
+          <div className="max-w-md">
+            <img
+              src="../src/assets/image.png"
+              alt="Ilustración de inicio de sesión"
+              className="w-full h-auto"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = "/placeholder.svg?height=400&width=400"
+              }}
+            />
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Correo electrónico
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Correo electrónico"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="Contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Recuérdame
-              </label>
-            </div>
+        {/* Right side - Login Form */}
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50 lg:bg-white">
+          <div className="w-full max-w-sm">
+            {!showEmailForm ? (
+              <>
+                {/* Main Login Options */}
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+                    Inicia sesión para continuar tu experiencia de aprendizaje
+                  </h1>
+                </div>
 
-            <div className="text-sm">
-              <a href="#" className="font-medium text-purple-600 hover:text-purple-500">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-          </div>
+                <div className="space-y-4">
+                  {/* Google Login Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleSocialLogin("Google")}
+                    className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                    </svg>
+                    Continuar con Google
+                  </button>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              Iniciar sesión
-            </button>
-          </div>
-        </form>
+                  {/* Email Login Option */}
+                  <button
+                    type="button"
+                    onClick={handleShowEmailForm}
+                    className="w-full text-center text-purple-600 hover:text-purple-700 font-medium py-2"
+                  >
+                    Iniciar sesión en una cuenta diferente
+                  </button>
+                </div>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">O continúa con</span>
-            </div>
-          </div>
+                {/* Register Link */}
+                <div className="mt-8 text-center">
+                  <span className="text-sm text-gray-600">
+                    ¿No tienes una cuenta?{" "}
+                    <Link to="/register" className="text-purple-600 hover:underline font-medium">
+                      Regístrate
+                    </Link>
+                  </span>
+                </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-3">
-            <div>
-              <a
-                href="#"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                <span className="sr-only">Sign in with Facebook</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path
-                    fillRule="evenodd"
-                    d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </a>
-            </div>
+                {/* Organization Login */}
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                    onClick={() => alert("Funcionalidad próximamente")}
+                  >
+                    Inicia sesión con tu organización
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Email/Password Form */}
+                <div className="mb-8">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-2">Iniciar sesión con correo electrónico</h1>
+                  <p className="text-gray-600 text-sm">
+                    Ingresa tu correo electrónico y contraseña para acceder a tu cuenta
+                  </p>
+                </div>
 
-            <div>
-              <a
-                href="#"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                <span className="sr-only">Sign in with Google</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
-                  />
-                </svg>
-              </a>
-            </div>
+                {errors.general && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{errors.general}</p>
+                  </div>
+                )}
 
-            <div>
-              <a
-                href="#"
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                <span className="sr-only">Sign in with Apple</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    d="M12.152,6.896c-0.948,0-2.415-1.078-3.96-1.04c-2.04,0.027-3.913,1.183-4.962,3.007c-2.12,3.675-0.54,9.127,1.519,12.122c1.013,1.454,2.208,3.09,3.792,3.039c1.52-0.065,2.09-0.987,3.935-0.987c1.831,0,2.35,0.987,3.96,0.948c1.637-0.026,2.676-1.48,3.676-2.948c1.156-1.688,1.636-3.325,1.662-3.415c-0.035-0.013-3.195-1.223-3.22-4.857c-0.026-3.04,2.48-4.494,2.597-4.559c-1.429-2.09-3.623-2.324-4.39-2.376C14.979,5.855,13.3,6.896,12.152,6.896z M15.629,3.809c0.837-1.013,1.403-2.427,1.247-3.83c-1.207,0.052-2.662,0.805-3.532,1.818c-0.78,0.896-1.456,2.338-1.273,3.714C13.394,5.587,14.792,4.822,15.629,3.809z"
-                  />
-                </svg>
-              </a>
-            </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  {/* Email Field */}
+                  <div>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Correo electrónico"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border ${
+                        errors.email ? "border-red-300" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                    />
+                    {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                  </div>
+
+                  {/* Password Field */}
+                  <div>
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Contraseña"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 border ${
+                        errors.password ? "border-red-300" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                    />
+                    {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+                  </div>
+
+                  {/* Remember Me and Forgot Password */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="rememberMe"
+                        id="rememberMe"
+                        checked={formData.rememberMe}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+                        Recordarme
+                      </label>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="text-sm text-purple-600 hover:text-purple-700"
+                      onClick={() => alert("Funcionalidad próximamente")}
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
+
+                  {/* Login Button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={`w-full py-3 px-4 rounded-md text-white font-medium ${
+                      isLoading
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Iniciando sesión...
+                      </div>
+                    ) : (
+                      "Iniciar sesión"
+                    )}
+                  </button>
+
+                  {/* Back Button */}
+                  <button
+                    type="button"
+                    onClick={handleBackToMain}
+                    className="w-full text-center text-purple-600 hover:text-purple-700 font-medium py-2"
+                  >
+                    ← Volver a opciones de inicio de sesión
+                  </button>
+                </form>
+
+                {/* Register Link */}
+                <div className="mt-6 text-center">
+                  <span className="text-sm text-gray-600">
+                    ¿No tienes una cuenta?{" "}
+                    <Link to="/register" className="text-purple-600 hover:underline font-medium">
+                      Regístrate
+                    </Link>
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import UdemyHeader from '../components/UdemyNavbar';
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import Carousel from "../components/Carousel";
+
 
 export default function HomePage() {
   const courses = [
@@ -49,29 +52,15 @@ export default function HomePage() {
       <Header />
 
       {/* Hero Section */}
-      <section className="bg-gray-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                Suscríbete a los mejores cursos de Udemy
-              </h1>
-              <p className="text-xl text-gray-600">
-                Elige entre más de 213,000 cursos de video en línea con nuevas adiciones publicadas cada mes
-              </p>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 text-lg rounded-md">
-                Comenzar
-              </button>
-            </div>
-            <div className="relative">
-              <img src="/udemy-hero.png" alt="Estudiante feliz" className="w-full h-auto rounded-lg" />
-            </div>
-          </div>
+      <section className="bg-white py-2 px-2 mx-auto max-w-7xl">
+        <div>
+          <Carousel />
+          {/* otras secciones */}
         </div>
       </section>
 
       {/* Skills Section */}
-      <section className="py-16">
+      <section className="py-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -80,6 +69,10 @@ export default function HomePage() {
             <p className="text-xl text-gray-600">
               Desde habilidades críticas hasta temas técnicos, Udemy apoya tu crecimiento profesional.
             </p>
+          </div>
+
+          <div>
+            <UdemyHeader />
           </div>
 
           {/* Course Categories */}

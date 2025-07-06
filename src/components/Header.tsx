@@ -5,17 +5,23 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
 
   return (
-    <header className="border-b border-gray-200 bg-white sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center space-x-1">
-            <Link to="/" className="text-2xl font-bold text-purple-600">udemy</Link>
-          </div>
+    <header className="border-b border-gray-200 bg-white sticky top-0 z-50 shadow">
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
 
-          {/* Categories */}
-          <div className="hidden lg:flex items-center space-x-8">
-            <button className="text-gray-700 hover:text-purple-600 font-medium">Categorías</button>
+          {/* Left buttoms */}
+          <div className="flex items-center space-x-4">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <Link to="/">
+                <img src="/src/assets/udemy.svg" alt="Logo Udemy" className="h-10 w-auto" />
+              </Link>
+            </div>
+
+            {/* Categories */}
+            <div className="hidden lg:flex items-center space-x-8">
+              <button className="text-gray-700 hover:text-purple-600 font-medium">Explorar</button>
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -47,12 +53,6 @@ export default function Header() {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
-            <button className="hidden lg:block text-gray-700 hover:text-purple-600 font-medium">
-              Udemy Business
-            </button>
-            <button className="hidden lg:block text-gray-700 hover:text-purple-600 font-medium">
-              Enseña en Udemy
-            </button>
             <button className="p-2 text-gray-700 hover:text-purple-600">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
