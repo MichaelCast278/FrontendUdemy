@@ -2,7 +2,7 @@ import{Route, Routes} from "react-router-dom"
 import Home from './pages/Home.tsx'
 import Login from './pages/Login.tsx'
 import Register from './pages/Register.tsx'
-import Dashboard from './pages/dashboard.tsx'
+import Dashboard from './pages/Dashboard.tsx'
 
 function App() {
   return(

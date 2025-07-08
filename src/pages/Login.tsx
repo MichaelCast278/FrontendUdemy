@@ -97,7 +97,7 @@ export default function LoginPage() {
       }
 
       // Call your Lambda API
-      const response = await fetch("https://7jhs634u92.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
+      const response = await fetch("https://mkztxsodkb.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

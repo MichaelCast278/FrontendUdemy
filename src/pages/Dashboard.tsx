@@ -1,41 +1,24 @@
 "use client"
-
+import CourseSection from "../components/CourseSection"
 import type React from "react"
-
+import PrivateLayout from "../layouts/PrivateLayout"
+import CarruselProBotones from "../components/CarouselLogin" // Asegúrate que la ruta esté bien
+import type { Course } from "../types/Course" // ✅ Ajusta la ruta si tu archivo está en otra carpeta
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import Header from "../components/Header"
-import Footer from "../components/Footer"
 import { ChevronLeft, ChevronRight, Star, Users, Clock, Play } from "lucide-react"
 
-// TypeScript interfaces
-interface Course {
-  curso_id: string
-  tenant_id: string
-  nombre: string
-  descripcion?: string
-  instructor?: string
-  precio?: number
-  precio_original?: number
-  rating?: number
-  estudiantes?: string
-  duracion?: string
-  imagen?: string
-  categoria?: string
-  nivel?: string
-}
+  interface ApiResponse {
+    message: string
+    cursos: Course[]
+    lastEvaluatedKey?: string
+  }
 
-interface ApiResponse {
-  message: string
-  cursos: Course[]
-  lastEvaluatedKey?: string
-}
-
-interface CourseCarouselProps {
-  title: string
-  courses: Course[]
-  isLoading: boolean
-}
+  interface CourseCarouselProps {
+    title: string
+    courses: Course[]
+    isLoading: boolean
+  }
 
 const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoading }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -85,6 +68,7 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoadi
   const visibleCourses = courses.slice(currentIndex, currentIndex + coursesPerView)
 
   return (
+    
     <section className="py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
@@ -116,7 +100,7 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoadi
             >
               <div className="relative">
                 <img
-                  src={course.imagen || "/placeholder.svg?height=200&width=300"}
+                  src={course.imagen_url || "/placeholder.svg?height=200&width=300"}
                   alt={course.nombre}
                   className="w-full h-40 object-cover"
                   onError={(e) => {
@@ -161,9 +145,10 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoadi
                       <span className="text-sm text-gray-500 line-through ml-2">${course.precio_original}</span>
                     )}
                   </div>
-                  {course.categoria && (
-                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{course.categoria}</span>
+                  {course.categories?.length > 0 && (
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{course.categories[0]}</span>
                   )}
+
                 </div>
               </div>
             </Link>
@@ -183,27 +168,29 @@ export default function Dashboard() {
   const [userName, setUserName] = useState<string>("Antonio")
 
   // Base URL for your API
-  const API_BASE_URL = "https://zjhs634u92.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://9nas5ah2h8.execute-api.us-east-1.amazonaws.com/dev"
   const TENANT_ID = "UDEMY"
 
   // Fetch all courses
   const fetchCourses = async () => {
-    try {
-      setIsLoading(true)
-      const response = await fetch(`${API_BASE_URL}/cursos?tenant_id=${TENANT_ID}&limit=20`)
-
-      if (response.ok) {
-        const data: ApiResponse = await response.json()
-        setAllCourses(data.cursos || [])
-      } else {
-        console.error("Error fetching courses:", response.statusText)
-      }
-    } catch (error) {
-      console.error("Error fetching courses:", error)
-    } finally {
-      setIsLoading(false)
+  try {
+    setIsLoading(true)
+    const response = await fetch(`${API_BASE_URL}/cursos?tenant_id=${TENANT_ID}&limit=20`)
+    if (response.ok) {
+      const data: ApiResponse = await response.json()
+      console.log("✅ Cursos recibidos:", data.cursos)
+      setAllCourses(data.cursos || [])
+    } else {
+      console.error("❌ Error HTTP:", response.statusText)
     }
+  } catch (error) {
+    console.error("❌ Error al hacer fetch:", error)
+  } finally {
+    setIsLoading(false)
   }
+}
+
+
 
   // Search courses by name
   const searchCourses = async (query: string) => {
@@ -219,16 +206,17 @@ export default function Dashboard() {
       )
 
       if (response.ok) {
-        const data: ApiResponse = await response.json()
-        setSearchResults(data.cursos || [])
-      } else {
-        console.error("Error searching courses:", response.statusText)
-        setSearchResults([])
-      }
+  const data: ApiResponse = await response.json()
+  console.log("✅ Cursos obtenidos del backend:", data.cursos)
+  setAllCourses(data.cursos || [])
+} else {
+  console.error("❌ Error en fetch (response NOT ok):", response.status, response.statusText)
+}
+
     } catch (error) {
-      console.error("Error searching courses:", error)
-      setSearchResults([])
-    } finally {
+  console.error("❌ Error al hacer fetch de cursos:", error)
+}
+ finally {
       setSearchLoading(false)
     }
   }
@@ -257,68 +245,57 @@ export default function Dashboard() {
     }
   }, [])
 
-  // Categorize courses for different sections
-  const featuredCourses = allCourses.slice(0, 8)
-  const recommendedCourses = allCourses.slice(8, 16)
-  const popularCourses = allCourses.slice(16, 24)
+const coursesByCategory = allCourses.reduce<Record<string, Course[]>>((acc, course) => {
+  if (course.categories && course.categories.length > 0) {
+    course.categories.forEach((category) => {
+      const key = category.toLowerCase().trim()
+      if (!acc[key]) acc[key] = []
+      acc[key].push(course)
+    })
+  } else {
+    if (!acc["general"]) acc["general"] = []
+    acc["general"].push(course)
+  }
+  return acc
+}, {})
+
+
+// ✅ Logs fuera del bloque
+console.log("📦 Cursos agrupados por categoría:", coursesByCategory)
+console.log("📦 Todas las categorías:", Object.keys(coursesByCategory))
+
+
+
+// Extrae nombres de categorías (sin transformar)
+const categoryNames = Object.keys(coursesByCategory).map(c => c.charAt(0).toUpperCase() + c.slice(1))
+
+// Filtra usando claves normalizadas
+const programacionCourses = coursesByCategory["programación"] || []
+const desarrolloWebCourses = coursesByCategory["desarrollo web"] || []
+const principiantesCourses = coursesByCategory["principiantes"] || []
+
+const destacados = allCourses.slice(0, 12) // muestra 12 sin filtrar por rating
+
+
+console.log("💻 Programación:", programacionCourses)
+console.log("🌐 Desarrollo Web:", desarrolloWebCourses)
+console.log("🎯 Principiantes:", principiantesCourses)
+console.log("⭐ Destacados:", destacados)
+
 
   return (
+    <PrivateLayout>
     <div className="min-h-screen bg-white">
-      <Header />
+      
 
       {/* Welcome Banner */}
-      <section className="bg-gradient-to-r from-orange-300 to-orange-400 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="bg-white p-6 rounded-lg shadow-sm max-w-md">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Te extrañamos, {userName}</h1>
-                <p className="text-gray-600 mb-4">
-                  Vuelve a la pista y logra tus objetivos. 5-10 minutos al día es todo lo que necesitas.
-                </p>
-                <Link to="/learning" className="text-purple-600 hover:text-purple-700 font-medium underline">
-                  Volver a la pista
-                </Link>
-              </div>
-            </div>
-            <div className="hidden lg:block">
-              <img
-                src="/images/welcome-banner.png"
-                alt="Welcome illustration"
-                className="h-48 w-auto"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = "/placeholder.svg?height=200&width=300"
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="relative">
+        {/* Carrusel de fondo */}
+        <CarruselProBotones />
 
-      {/* Search Bar */}
-      <section className="py-6 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto">
-            <input
-              type="text"
-              placeholder="¿Qué quieres aprender?"
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            />
-          </div>
-        </div>
+        
       </section>
-
-      {/* Search Results */}
-      {searchQuery && (
-        <CourseCarousel
-          title={`Resultados de búsqueda para "${searchQuery}"`}
-          courses={searchResults}
-          isLoading={searchLoading}
-        />
-      )}
+    
 
       {/* Business Training Banner */}
       <section className="py-4">
@@ -341,57 +318,44 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Course Sections */}
-      <CourseCarousel title="Qué aprender a continuación" courses={featuredCourses} isLoading={isLoading} />
+      {/* Course Sections by Category */}
+      <CourseCarousel title="Cursos recomendados" courses={destacados} isLoading={isLoading} />
 
-      <CourseCarousel title="Porque viste cursos de desarrollo" courses={recommendedCourses} isLoading={isLoading} />
 
-      <CourseCarousel title="Los estudiantes están viendo" courses={popularCourses} isLoading={isLoading} />
+      <CourseSection title="Cursos de Programación" courses={programacionCourses} isLoading={isLoading} />
 
-      <CourseCarousel title="Recomendado para ti" courses={allCourses.slice(0, 12)} isLoading={isLoading} />
+      <CourseSection title="Desarrollo Web" courses={desarrolloWebCourses} isLoading={isLoading} />
 
-      {/* Categories Section */}
+      <CourseSection title="Para Principiantes" courses={principiantesCourses} isLoading={isLoading} />
+
+
+
+      {/* All Categories Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Explora por categoría</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <Link
-              to="/category/development"
-              className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
-            >
-              <div className="text-4xl mb-4">💻</div>
-              <h3 className="font-semibold text-gray-900">Desarrollo</h3>
-              <p className="text-sm text-gray-600 mt-2">Más de 1,500 cursos</p>
-            </Link>
-            <Link
-              to="/category/business"
-              className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
-            >
-              <div className="text-4xl mb-4">💼</div>
-              <h3 className="font-semibold text-gray-900">Negocios</h3>
-              <p className="text-sm text-gray-600 mt-2">Más de 2,000 cursos</p>
-            </Link>
-            <Link
-              to="/category/design"
-              className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
-            >
-              <div className="text-4xl mb-4">🎨</div>
-              <h3 className="font-semibold text-gray-900">Diseño</h3>
-              <p className="text-sm text-gray-600 mt-2">Más de 800 cursos</p>
-            </Link>
-            <Link
-              to="/category/marketing"
-              className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
-            >
-              <div className="text-4xl mb-4">📈</div>
-              <h3 className="font-semibold text-gray-900">Marketing</h3>
-              <p className="text-sm text-gray-600 mt-2">Más de 1,200 cursos</p>
-            </Link>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {categoryNames.map((categoryName) => (
+              <Link
+                key={categoryName}
+                to={`/category/${categoryName.toLowerCase().replace(/\s+/g, "-")}`}
+                className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow bg-white"
+              >
+                <div className="text-4xl mb-4">
+                  {categoryName === "Programación" && "💻"}
+                  {categoryName === "Desarrollo Web" && "🌐"}
+                  {categoryName === "Principiantes" && "🎯"}
+                  {!["Programación", "Desarrollo Web", "Principiantes"].includes(categoryName) && "📚"}
+                </div>
+                <h3 className="font-semibold text-gray-900">{categoryName}</h3>
+                <p className="text-sm text-gray-600 mt-2">{coursesByCategory[categoryName].length} cursos</p>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <Footer />
     </div>
+    </PrivateLayout>
   )
 }

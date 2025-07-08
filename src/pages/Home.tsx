@@ -3,6 +3,8 @@ import UdemyHeader from '../components/UdemyNavbar';
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Carousel from "../components/Carousel";
+import PublicLayout from "../layouts/PublicLayout"
+
 
 
 export default function HomePage() {
@@ -48,8 +50,9 @@ export default function HomePage() {
   const companies = ["Volkswagen", "Samsung", "Cisco", "Vimeo", "P&G", "Citi", "Ericsson"]
 
   return (
+    <PublicLayout>
     <div className="min-h-screen bg-white">
-      <Header />
+      
 
       {/* Hero Section */}
       <section className="bg-white py-2 px-2 mx-auto max-w-7xl">
@@ -218,8 +221,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
+    </PublicLayout>
   )
 }
