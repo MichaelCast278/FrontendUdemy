@@ -110,12 +110,12 @@ export default function HomePage() {
                 className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <img 
-                  src={course.image || "/placeholder.svg"} 
+                  src={course.image || "/placeholder.jpg"} 
                   alt={course.title} 
                   className="w-full h-40 object-cover" 
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = "https://via.placeholder.com/300x200";
+                    target.src = "/placeholder.jpg";
                   }}
                 />
                 <div className="p-4">
@@ -172,7 +172,7 @@ export default function HomePage() {
                 className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <img
-                  src="https://via.placeholder.com/200x120"
+                  src="/placeholder.jpg"
                   alt={`Curso ${index + 1}`}
                   className="w-full h-24 object-cover"
                 />

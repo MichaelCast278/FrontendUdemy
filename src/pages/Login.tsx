@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link , useNavigate} from "react-router-dom"
 import Header from "../components/Header"
 
 // TypeScript interfaces
@@ -25,23 +25,13 @@ interface LoginData {
   tenant_id: string
 }
 
-interface LoginResponse {
-  statusCode: number
-  body:
-    | {
-        token?: string
-        user_id?: string
-        tenant_id?: string
-      }
-    | string
-}
-
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
     rememberMe: false,
   })
+  const navigate = useNavigate()
   const [errors, setErrors] = useState<LoginErrors>({})
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showEmailForm, setShowEmailForm] = useState<boolean>(true)
@@ -77,78 +67,57 @@ export default function LoginPage() {
   }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  e.preventDefault()
 
-    const newErrors = validateForm()
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
-
-    setIsLoading(true)
-    setErrors({})
-
-    try {
-      // Prepare data for your Lambda API
-      const loginData: LoginData = {
-        user_id: formData.email,
-        password: formData.password,
-        tenant_id: "default_tenant", // You might want to make this dynamic
-      }
-
-      // Call your Lambda API
-      const response = await fetch("https://mkztxsodkb.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-      })
-
-      const result: LoginResponse = await response.json()
-
-      if (response.ok && result.statusCode === 200) {
-        // Login successful
-        const responseBody = result.body as { token: string; user_id: string; tenant_id: string }
-
-        // Store token in localStorage or sessionStorage
-        if (formData.rememberMe) {
-          localStorage.setItem("authToken", responseBody.token)
-          localStorage.setItem("userId", responseBody.user_id)
-          localStorage.setItem("tenantId", responseBody.tenant_id)
-        } else {
-          sessionStorage.setItem("authToken", responseBody.token)
-          sessionStorage.setItem("userId", responseBody.user_id)
-          sessionStorage.setItem("tenantId", responseBody.tenant_id)
-        }
-
-        // Redirect to dashboard
-        window.location.href = "/dashboard"
-      } else {
-        // Handle API errors
-        let errorMessage = "Error en el inicio de sesión"
-
-        if (result.statusCode === 403) {
-          if (typeof result.body === "string") {
-            if (result.body === "Usuario no existe") {
-              errorMessage = "No existe una cuenta con este correo electrónico"
-            } else if (result.body === "Password incorrecto") {
-              errorMessage = "La contraseña es incorrecta"
-            }
-          }
-        }
-
-        setErrors({ general: errorMessage })
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      setErrors({
-        general: "Error de conexión. Por favor intenta nuevamente.",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  const newErrors = validateForm()
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors)
+    return
   }
+
+  setIsLoading(true)
+  setErrors({})
+
+  try {
+    const loginData: LoginData = {
+      user_id: formData.email,
+      password: formData.password,
+      tenant_id: "UDEMY",
+    }
+
+    const response = await fetch("https://7jhs634u92.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(loginData),
+    })
+
+    const result: {
+      token: string
+      user_id: string
+      tenant_id: string
+    } = await response.json()
+
+    if (response.ok) {
+      localStorage.setItem("authToken", result.token)
+      localStorage.setItem("userId", result.user_id)
+      localStorage.setItem("tenantId", result.tenant_id)
+
+      navigate("/dashboard") // ✅ Redirige automáticamente
+    } else {
+      setErrors({ general: "Error en el inicio de sesión" })
+    }
+  } catch (error) {
+    console.error("Login error:", error)
+    setErrors({
+      general: "Error de conexión. Por favor intenta nuevamente.",
+    })
+  } finally {
+    setIsLoading(false)
+  }
+}
+
 
   const handleSocialLogin = (provider: string): void => {
     console.log(`Login with ${provider}`)
@@ -179,7 +148,7 @@ export default function LoginPage() {
               className="w-full h-auto"
               onError={(e) => {
                 const target = e.target as HTMLImageElement
-                target.src = "/placeholder.svg?height=400&width=400"
+                target.src = "/placeholder.jpg"
               }}
             />
           </div>

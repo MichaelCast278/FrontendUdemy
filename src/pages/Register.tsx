@@ -127,7 +127,7 @@ export default function RegisterPage() {
       }
 
       // Call your Lambda API
-      const response = await fetch("https://mkztxsodkb.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
+      const response = await fetch("https://7jhs634u92.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +137,7 @@ export default function RegisterPage() {
 
       const result = await response.json()
 
-      if (response.ok && result.statusCode === 200) {
+      if (response.ok) {
         window.location.href = "/login" // O muestra un mensaje de éxito y redirige manualmente
       }
       else {
@@ -181,7 +181,7 @@ export default function RegisterPage() {
               className="w-full h-auto"
               onError={(e) => {
                 const target = e.target as HTMLImageElement
-                target.src = "/placeholder.svg?height=400&width=400"
+                target.src = "/placeholder.jpg"
               }}
             />
           </div>

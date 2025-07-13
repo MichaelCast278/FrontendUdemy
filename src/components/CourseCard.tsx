@@ -18,12 +18,12 @@ export default function CourseCard({ course }: CourseCardProps) {
     >
       <div className="relative">
         <img
-          src={course.imagen_url || "/placeholder.svg?height=200&width=300"}
+          src={course.imagen_url || "/placeholder.jpg"}
           alt={course.nombre}
           className="w-full h-48 object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement
-            target.src = "/placeholder.svg?height=200&width=300"
+            target.src = "/placeholder.jpg"
           }}
         />
         <div className="absolute top-2 left-2">

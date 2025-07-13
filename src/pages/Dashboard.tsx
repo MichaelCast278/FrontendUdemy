@@ -100,12 +100,16 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoadi
             >
               <div className="relative">
                 <img
-                  src={course.imagen_url || "/placeholder.svg?height=200&width=300"}
+                  src={
+                    course.imagen_url && course.imagen_url.startsWith("http")
+                      ? course.imagen_url
+                      : "/placeholder.jpg"
+                  }
                   alt={course.nombre}
                   className="w-full h-40 object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
-                    target.src = "/placeholder.svg?height=200&width=300"
+                    target.src = "/placeholder.jpg"
                   }}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
@@ -168,58 +172,110 @@ export default function Dashboard() {
   const [userName, setUserName] = useState<string>("Antonio")
 
   // Base URL for your API
-  const API_BASE_URL = "https://9nas5ah2h8.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev"
   const TENANT_ID = "UDEMY"
 
   // Fetch all courses
   const fetchCourses = async () => {
   try {
     setIsLoading(true)
-    const response = await fetch(`${API_BASE_URL}/cursos?tenant_id=${TENANT_ID}&limit=20`)
+
+    // Obtener valores de localStorage
+    const token = localStorage.getItem("authToken")
+    const tenantId = localStorage.getItem("tenantId") || TENANT_ID // fallback
+
+    // 🔍 Mostrar los valores en consola para depuración
+    console.log("🧠 Token desde localStorage:", token)
+    console.log("🏷️ Tenant ID desde localStorage:", tenantId)
+
+    const url = `${API_BASE_URL}/cursos?tenant_id=${tenantId}`
+    console.log("📡 URL completa del fetch:", url)
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `${token}`,
+      },
+    })
+
     if (response.ok) {
-      const data: ApiResponse = await response.json()
-      console.log("✅ Cursos recibidos:", data.cursos)
-      setAllCourses(data.cursos || [])
-    } else {
-      console.error("❌ Error HTTP:", response.statusText)
+   const data: ApiResponse = await response.json()
+    console.log("📦 Respuesta completa del backend:", data) // 👈 aquí ves todo lo recibido
+    setAllCourses(data.cursos || [])
     }
-  } catch (error) {
-    console.error("❌ Error al hacer fetch:", error)
-  } finally {
-    setIsLoading(false)
+  else {
+        console.error("❌ Error HTTP:", response.status, response.statusText)
+      }
+    } catch (error) {
+      console.error("❌ Error al hacer fetch:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
+
+
 
 
 
   // Search courses by name
   const searchCourses = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([])
-      return
+        if (!query.trim()) {
+          setSearchResults([])
+          return
+        }
+
+        try {
+          setSearchLoading(true)
+          const response = await fetch(
+            `${API_BASE_URL}/cursos/search?tenant_id=${TENANT_ID}&name=${encodeURIComponent(query)}&limit=12`,
+          )
+
+          if (response.ok) {
+      const data: ApiResponse = await response.json()
+      console.log("✅ Cursos obtenidos del backend:", data.cursos)
+      setAllCourses(data.cursos || [])
+    } else {
+      console.error("❌ Error en fetch (response NOT ok):", response.status, response.statusText)
     }
 
-    try {
-      setSearchLoading(true)
-      const response = await fetch(
-        `${API_BASE_URL}/cursos/search?tenant_id=${TENANT_ID}&name=${encodeURIComponent(query)}&limit=12`,
-      )
-
-      if (response.ok) {
-  const data: ApiResponse = await response.json()
-  console.log("✅ Cursos obtenidos del backend:", data.cursos)
-  setAllCourses(data.cursos || [])
-} else {
-  console.error("❌ Error en fetch (response NOT ok):", response.status, response.statusText)
-}
-
-    } catch (error) {
-  console.error("❌ Error al hacer fetch de cursos:", error)
-}
- finally {
-      setSearchLoading(false)
+        } catch (error) {
+      console.error("❌ Error al hacer fetch de cursos:", error)
     }
+    finally {
+          setSearchLoading(false)
+        }
+      }
+
+
+  const obtenerCursoPorId = async (id: string) => {
+  try {
+    const token = localStorage.getItem("authToken")
+    const tenantId = localStorage.getItem("tenantId")
+
+    const response = await fetch(`https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev/cursos/${id}`, {
+      method: "GET",
+      headers: {
+        "Authorization": token || "",
+        "tenant-id": tenantId || "",
+      },
+      credentials: "include" // si el token se pasa como cookie
+
+    })
+
+    if (!response.ok) {
+      throw new Error("Error al obtener el curso")
+    }
+
+    const data = await response.json()
+    console.log("✅ Curso:", data)
+    // Aquí puedes setearlo a un estado, mostrarlo, etc.
+  } catch (error) {
+    console.error("❌ Error:", error)
   }
+}
+
+
 
   // Handle search input
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -259,13 +315,6 @@ const coursesByCategory = allCourses.reduce<Record<string, Course[]>>((acc, cour
   return acc
 }, {})
 
-
-// ✅ Logs fuera del bloque
-console.log("📦 Cursos agrupados por categoría:", coursesByCategory)
-console.log("📦 Todas las categorías:", Object.keys(coursesByCategory))
-
-
-
 // Extrae nombres de categorías (sin transformar)
 const categoryNames = Object.keys(coursesByCategory).map(c => c.charAt(0).toUpperCase() + c.slice(1))
 
@@ -275,13 +324,6 @@ const desarrolloWebCourses = coursesByCategory["desarrollo web"] || []
 const principiantesCourses = coursesByCategory["principiantes"] || []
 
 const destacados = allCourses.slice(0, 12) // muestra 12 sin filtrar por rating
-
-
-console.log("💻 Programación:", programacionCourses)
-console.log("🌐 Desarrollo Web:", desarrolloWebCourses)
-console.log("🎯 Principiantes:", principiantesCourses)
-console.log("⭐ Destacados:", destacados)
-
 
   return (
     <PrivateLayout>
@@ -328,6 +370,11 @@ console.log("⭐ Destacados:", destacados)
 
       <CourseSection title="Para Principiantes" courses={principiantesCourses} isLoading={isLoading} />
 
+      <button onClick={() => obtenerCursoPorId("53d7c14b-1752-4530-b2b0-3d2eea5767a6")}>
+        Ver detalles del curso
+      </button>
+
+
 
 
       {/* All Categories Section */}
@@ -348,7 +395,10 @@ console.log("⭐ Destacados:", destacados)
                   {!["Programación", "Desarrollo Web", "Principiantes"].includes(categoryName) && "📚"}
                 </div>
                 <h3 className="font-semibold text-gray-900">{categoryName}</h3>
-                <p className="text-sm text-gray-600 mt-2">{coursesByCategory[categoryName].length} cursos</p>
+                <p className="text-sm text-gray-600 mt-2">
+                  {(coursesByCategory[categoryName]?.length || 0)} cursos
+                </p>
+
               </Link>
             ))}
           </div>
