@@ -16,17 +16,13 @@ function App() {
       <Route
         path="/dashboard"
         element={
-          <PrivateLayout>
             <Dashboard />
-          </PrivateLayout>
         }
       />
       <Route
         path="/course/:courseId"
         element={
-          <PrivateLayout>
             <CourseDetail />
-          </PrivateLayout>
         }
       />
 

@@ -165,14 +165,12 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({ title, courses, isLoadi
 
 export default function Dashboard() {
   const [allCourses, setAllCourses] = useState<Course[]>([])
-  const [searchResults, setSearchResults] = useState<Course[]>([])
+  
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [searchLoading, setSearchLoading] = useState<boolean>(false)
-  const [searchQuery, setSearchQuery] = useState<string>("")
-  const [userName, setUserName] = useState<string>("Antonio")
+
 
   // Base URL for your API
-  const API_BASE_URL = "https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
   const TENANT_ID = "UDEMY"
 
   // Fetch all courses
@@ -214,92 +212,11 @@ export default function Dashboard() {
     }
   }
 
-
-
-
-
-  // Search courses by name
-  const searchCourses = async (query: string) => {
-        if (!query.trim()) {
-          setSearchResults([])
-          return
-        }
-
-        try {
-          setSearchLoading(true)
-          const response = await fetch(
-            `${API_BASE_URL}/cursos/search?tenant_id=${TENANT_ID}&name=${encodeURIComponent(query)}&limit=12`,
-          )
-
-          if (response.ok) {
-      const data: ApiResponse = await response.json()
-      console.log("✅ Cursos obtenidos del backend:", data.cursos)
-      setAllCourses(data.cursos || [])
-    } else {
-      console.error("❌ Error en fetch (response NOT ok):", response.status, response.statusText)
-    }
-
-        } catch (error) {
-      console.error("❌ Error al hacer fetch de cursos:", error)
-    }
-    finally {
-          setSearchLoading(false)
-        }
-      }
-
-
-  const obtenerCursoPorId = async (id: string) => {
-  try {
-    const token = localStorage.getItem("authToken")
-    const tenantId = localStorage.getItem("tenantId")
-
-    const response = await fetch(`https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev/cursos/${id}`, {
-      method: "GET",
-      headers: {
-        "Authorization": token || "",
-        "tenant-id": tenantId || "",
-      },
-      credentials: "include" // si el token se pasa como cookie
-
-    })
-
-    if (!response.ok) {
-      throw new Error("Error al obtener el curso")
-    }
-
-    const data = await response.json()
-    console.log("✅ Curso:", data)
-    // Aquí puedes setearlo a un estado, mostrarlo, etc.
-  } catch (error) {
-    console.error("❌ Error:", error)
-  }
-}
-
-
-
-  // Handle search input
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value
-    setSearchQuery(query)
-
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      searchCourses(query)
-    }, 500)
-
-    return () => clearTimeout(timeoutId)
-  }
-
   useEffect(() => {
-    fetchCourses()
+  fetchCourses()
+}, [])
 
-    // Get user name from localStorage if available
-    const storedUserId = localStorage.getItem("userId") || sessionStorage.getItem("userId")
-    if (storedUserId) {
-      const name = storedUserId.split("@")[0]
-      setUserName(name.charAt(0).toUpperCase() + name.slice(1))
-    }
-  }, [])
+
 
 const coursesByCategory = allCourses.reduce<Record<string, Course[]>>((acc, course) => {
   if (course.categories && course.categories.length > 0) {
@@ -315,6 +232,9 @@ const coursesByCategory = allCourses.reduce<Record<string, Course[]>>((acc, cour
   return acc
 }, {})
 
+
+ 
+  
 // Extrae nombres de categorías (sin transformar)
 const categoryNames = Object.keys(coursesByCategory).map(c => c.charAt(0).toUpperCase() + c.slice(1))
 
@@ -370,9 +290,7 @@ const destacados = allCourses.slice(0, 12) // muestra 12 sin filtrar por rating
 
       <CourseSection title="Para Principiantes" courses={principiantesCourses} isLoading={isLoading} />
 
-      <button onClick={() => obtenerCursoPorId("53d7c14b-1752-4530-b2b0-3d2eea5767a6")}>
-        Ver detalles del curso
-      </button>
+   
 
 
 
