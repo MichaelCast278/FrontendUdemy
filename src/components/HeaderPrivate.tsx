@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Search, ShoppingCart, Heart, Bell, Globe, ChevronDown, BookOpen, LogOut } from "lucide-react"
+import { useCart } from "../contextos/Context-Carrito"
 
 interface UserData {
   user_id: string
@@ -20,6 +20,7 @@ export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showCategoriesMenu, setShowCategoriesMenu] = useState(false)
   const navigate = useNavigate()
+  const { state: cartState } = useCart()
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -41,7 +42,6 @@ export default function Header() {
     }
 
     checkAuthStatus()
-
     // Listen for storage changes (when user logs in/out in another tab)
     window.addEventListener("storage", checkAuthStatus)
     return () => window.removeEventListener("storage", checkAuthStatus)
@@ -55,7 +55,6 @@ export default function Header() {
     sessionStorage.removeItem("authToken")
     sessionStorage.removeItem("userId")
     sessionStorage.removeItem("tenantId")
-
     setIsAuthenticated(false)
     setUser(null)
     setShowUserMenu(false)
@@ -116,7 +115,6 @@ export default function Header() {
                       <span>Explorar</span>
                       <ChevronDown className="h-4 w-4" />
                     </button>
-
                   </div>
                 </div>
               )}
@@ -147,14 +145,12 @@ export default function Header() {
                   >
                     Udemy Business
                   </Link>
-
                   <Link
                     to="/teach"
                     className="hidden lg:inline-flex text-sm text-gray-700 hover:text-purple-600 font-medium"
                   >
                     Enseña en Udemy
                   </Link>
-
                   <Link
                     to="/my-learning"
                     className="hidden lg:inline-flex text-sm text-gray-700 hover:text-purple-600 font-medium"
@@ -167,9 +163,14 @@ export default function Header() {
                     <Heart className="w-5 h-5" />
                   </Link>
 
-                  {/* Shopping Cart */}
+                  {/* Shopping Cart with Badge */}
                   <Link to="/cart" className="p-2 text-gray-700 hover:text-purple-600 relative">
                     <ShoppingCart className="w-5 h-5" />
+                    {cartState.itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {cartState.itemCount > 9 ? "9+" : cartState.itemCount}
+                      </span>
+                    )}
                   </Link>
 
                   {/* Notifications */}
@@ -201,7 +202,6 @@ export default function Header() {
                             </div>
                           </div>
                         </div>
-
                         <div className="py-2">
                           <Link
                             to="/my-learning"
@@ -211,7 +211,14 @@ export default function Header() {
                             <BookOpen className="w-4 h-4" />
                             <span>Mi aprendizaje</span>
                           </Link>
-
+                          <Link
+                            to="/my-purchases"
+                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <ShoppingCart className="w-4 h-4" />
+                            <span>Mis compras</span>
+                          </Link>
                           <Link
                             to="/profile"
                             className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -220,7 +227,6 @@ export default function Header() {
                             <BookOpen className="w-4 h-4" />
                             <span>Mi perfil</span>
                           </Link>
-
                           <Link
                             to="/account"
                             className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -228,9 +234,7 @@ export default function Header() {
                           >
                             <span>Cuenta</span>
                           </Link>
-
                           <div className="border-t border-gray-200 my-2"></div>
-
                           <button
                             onClick={handleLogout}
                             className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
@@ -254,21 +258,18 @@ export default function Header() {
                   <button className="p-2 text-gray-700 hover:text-purple-600">
                     <ShoppingCart className="w-6 h-6" />
                   </button>
-
                   <Link
                     to="/login"
                     className="hidden sm:inline-flex px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 font-medium"
                   >
                     Iniciar sesión
                   </Link>
-
                   <Link
                     to="/register"
                     className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-md font-medium"
                   >
                     Regístrate
                   </Link>
-
                   <button className="p-2 text-gray-700 hover:text-purple-600">
                     <Globe className="w-5 h-5" />
                   </button>

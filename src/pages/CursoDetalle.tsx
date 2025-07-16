@@ -15,9 +15,12 @@ import {
   ChevronUp,
   Heart,
   Share2,
+  ShoppingCart,
+  Check,
 } from "lucide-react"
 import PrivateLayout from "../layouts/PrivateLayout"
 import type { Course } from "../types/Course"
+import { useCart } from "../contextos/Context-Carrito"
 
 interface CourseDetail extends Course {
   descripcion_larga?: string
@@ -42,8 +45,13 @@ export default function CourseDetail() {
   const [error, setError] = useState<string | null>(null)
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [showAddedToCart, setShowAddedToCart] = useState(false)
 
-  const API_BASE_URL = "https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev"
+  const { addItem, state: cartState } = useCart()
+  const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
+
+  // Check if course is already in cart
+  const isInCart = course ? cartState.items.some((item) => item.curso_id === course.curso_id) : false
 
   const fetchCourseDetail = async () => {
     if (!courseId) return
@@ -58,7 +66,6 @@ export default function CourseDetail() {
         headers: {
           "Content-Type": "application/json",
           Authorization: `${token}`,
-          "tenant-id": tenantId || "",
         },
       })
 
@@ -87,8 +94,25 @@ export default function CourseDetail() {
   }
 
   const handleAddToCart = () => {
-    // Implementar lógica del carrito
-    console.log("Agregado al carrito:", course?.nombre)
+    if (!course || isInCart) return
+
+    const cartItem = {
+      curso_id: course.curso_id,
+      nombre: course.nombre,
+      precio: Number(course.precio),
+      imagen_url: course.imagen_url,
+      instructor: course.instructor,
+      duracion: course.duracion,
+      rating: course.rating,
+    }
+
+    addItem(cartItem)
+    setShowAddedToCart(true)
+
+    // Hide the "added to cart" message after 3 seconds
+    setTimeout(() => {
+      setShowAddedToCart(false)
+    }, 3000)
   }
 
   const handleWishlist = () => {
@@ -216,12 +240,46 @@ export default function CourseDetail() {
                     </div>
 
                     <div className="space-y-3">
+                      {/* Add to Cart Button */}
                       <button
                         onClick={handleAddToCart}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded transition-colors"
+                        disabled={isInCart}
+                        className={`w-full font-bold py-3 px-4 rounded transition-colors flex items-center justify-center ${
+                          isInCart
+                            ? "bg-green-600 text-white cursor-not-allowed"
+                            : showAddedToCart
+                              ? "bg-green-600 text-white"
+                              : "bg-purple-600 hover:bg-purple-700 text-white"
+                        }`}
                       >
-                        Agregar al carrito
+                        {isInCart ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            En el carrito
+                          </>
+                        ) : showAddedToCart ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            ¡Añadido al carrito!
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="h-4 w-4 mr-2" />
+                            Agregar al carrito
+                          </>
+                        )}
                       </button>
+
+                      {/* Go to Cart Button - Show when item is in cart */}
+                      {isInCart && (
+                        <Link
+                          to="/cart"
+                          className="w-full border-2 border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-3 px-4 rounded transition-colors flex items-center justify-center"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Ir al carrito
+                        </Link>
+                      )}
 
                       <button
                         onClick={handleWishlist}
@@ -354,7 +412,6 @@ export default function CourseDetail() {
                       <ChevronDown className="h-5 w-5 text-gray-400" />
                     )}
                   </button>
-
                   {expandedSection === `section-${index}` && (
                     <div className="px-4 pb-3 border-t border-gray-200 bg-gray-50">
                       <div className="pt-3 space-y-2">

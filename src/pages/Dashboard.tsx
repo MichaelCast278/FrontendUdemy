@@ -171,7 +171,6 @@ export default function Dashboard() {
 
   // Base URL for your API
   const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
-  const TENANT_ID = "UDEMY"
 
   // Fetch all courses
   const fetchCourses = async () => {
@@ -180,13 +179,13 @@ export default function Dashboard() {
 
     // Obtener valores de localStorage
     const token = localStorage.getItem("authToken")
-    const tenantId = localStorage.getItem("tenantId") || TENANT_ID // fallback
+
 
     // 🔍 Mostrar los valores en consola para depuración
     console.log("🧠 Token desde localStorage:", token)
-    console.log("🏷️ Tenant ID desde localStorage:", tenantId)
+    
 
-    const url = `${API_BASE_URL}/cursos?tenant_id=${tenantId}`
+    const url = `${API_BASE_URL}/cursos`
     console.log("📡 URL completa del fetch:", url)
 
     const response = await fetch(url, {
