@@ -7,6 +7,9 @@ import CourseDetail from './pages/CursoDetalle.tsx'
 import MyPurchases from './pages/Mis-compras.tsx'
 import { CartProvider } from './contextos/Context-Carrito'
 import Cart from './pages/Carrito.tsx'
+import Profile from './pages/Perfil.tsx'
+import MyLearning from "./pages/MyAprendizaje.tsx"
+
 
 
 function App() {
@@ -20,6 +23,8 @@ function App() {
         <Route path="/course/:courseId" element={<CourseDetail />} />
         <Route path="/my-purchases" element={<MyPurchases />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/my-learning" element={<MyLearning />} />
       </Routes>
     </CartProvider>
   )

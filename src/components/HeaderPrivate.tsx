@@ -1,10 +1,10 @@
 "use client"
-
-import type React from "react"
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Search, ShoppingCart, Heart, Bell, Globe, ChevronDown, BookOpen, LogOut } from "lucide-react"
+import { ShoppingCart, Heart, Bell, Globe, ChevronDown, BookOpen, LogOut } from "lucide-react"
 import { useCart } from "../contextos/Context-Carrito"
+import AutocompleteSearch from "./Autocompletado"
+
 
 interface UserData {
   user_id: string
@@ -14,7 +14,6 @@ interface UserData {
 }
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState("")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<UserData | null>(null)
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -61,10 +60,9 @@ export default function Header() {
     navigate("/")
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`)
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query)}`)
     }
   }
 
@@ -115,23 +113,57 @@ export default function Header() {
                       <span>Explorar</span>
                       <ChevronDown className="h-4 w-4" />
                     </button>
+
+                    {/* Categories Dropdown */}
+                    {showCategoriesMenu && (
+                      <div className="absolute left-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                        <div className="py-2">
+                          <Link
+                            to="/category/programacion"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowCategoriesMenu(false)}
+                          >
+                            💻 Programación
+                          </Link>
+                          <Link
+                            to="/category/desarrollo-web"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowCategoriesMenu(false)}
+                          >
+                            🌐 Desarrollo Web
+                          </Link>
+                          <Link
+                            to="/category/principiantes"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowCategoriesMenu(false)}
+                          >
+                            🎯 Para Principiantes
+                          </Link>
+                          <Link
+                            to="/category/diseno"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowCategoriesMenu(false)}
+                          >
+                            🎨 Diseño
+                          </Link>
+                          <Link
+                            to="/category/marketing"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowCategoriesMenu(false)}
+                          >
+                            📈 Marketing
+                          </Link>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Search Bar */}
+            {/* Search Bar with Autocomplete */}
             <div className="flex-1 max-w-2xl mx-8">
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Busca cualquier tema"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </form>
+              <AutocompleteSearch placeholder="Busca cualquier tema" onSearch={handleSearch} className="w-full" />
             </div>
 
             {/* Right side */}
@@ -224,7 +256,7 @@ export default function Header() {
                             className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => setShowUserMenu(false)}
                           >
-                            <BookOpen className="w-4 h-4" />
+                            <BookOpen className="w-4 w-4" />
                             <span>Mi perfil</span>
                           </Link>
                           <Link

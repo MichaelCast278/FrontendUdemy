@@ -8,15 +8,21 @@ import Header from "../components/Header"
 
 // TypeScript interfaces
 interface FormData {
-  fullName: string
+  nombre: string
+  apellido: string
   email: string
   password: string
+  telefono: string
   receiveOffers: boolean
 }
 
+
+
 interface FormErrors {
-  fullName?: string
+  nombre?: string
+  apellido?: string
   email?: string
+  telefono?: string
   password?: string
   general?: string
 }
@@ -27,16 +33,22 @@ interface RegistrationData {
   tenant_id: string
   nombre: string
   apellido: string
+  telefono: string
   idioma: string
 }
 
+
 export default function RegisterPage() {
   const [formData, setFormData] = useState<FormData>({
-    fullName: "",
-    email: "",
-    password: "",
-    receiveOffers: false,
-  })
+  nombre: "",
+  apellido: "",
+  email: "",
+  password: "",
+  telefono: "",
+  receiveOffers: false,
+})
+
+
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [showPasswordStep, setShowPasswordStep] = useState<boolean>(false)
@@ -57,8 +69,12 @@ export default function RegisterPage() {
   const validateFirstStep = (): FormErrors => {
     const newErrors: FormErrors = {}
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "El nombre completo es requerido"
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = "El nombre es requerido"
+    }
+
+    if (!formData.apellido.trim()) {
+      newErrors.apellido = "El apellido es requerido"
     }
 
     if (!formData.email.trim()) {
@@ -66,6 +82,11 @@ export default function RegisterPage() {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Ingresa un correo electrónico válido"
     }
+
+    if (!formData.telefono.trim()) {
+  newErrors.telefono = "El número de teléfono es requerido"
+}
+
 
     return newErrors
   }
@@ -107,54 +128,57 @@ export default function RegisterPage() {
   }
 
   const handleRegistration = async (): Promise<void> => {
-    setIsLoading(true)
-    setErrors({})
+  setIsLoading(true)
+  setErrors({})
 
-    try {
-      // Split full name into nombre and apellido
-      const nameParts = formData.fullName.trim().split(" ")
-      const nombre = nameParts[0] || ""
-      const apellido = nameParts.slice(1).join(" ") || ""
+  try {
+    // Split full name into nombre y apellido
+    const nombre = formData.nombre.trim()
+    const apellido = formData.apellido.trim()
 
-      // Prepare data for your Lambda API
-      const registrationData: RegistrationData = {
-        user_id: formData.email, // Using email as user_id as per your Lambda
-        password: formData.password,
-        tenant_id: "default_tenant", // You might want to make this dynamic
-        nombre: nombre,
-        apellido: apellido,
-        idioma: "es", // Default to Spanish
-      }
 
-      // Call your Lambda API
-      const response = await fetch("https://2ve7z54rvb.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registrationData),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        window.location.href = "/login" // O muestra un mensaje de éxito y redirige manualmente
-      }
-      else {
-        // Handle API errors
-        setErrors({
-          general: result.response?.error || "Error en el registro. Intenta nuevamente.",
-        })
-      }
-    } catch (error) {
-      console.error("Registration error:", error)
-      setErrors({
-        general: "Error de conexión. Por favor intenta nuevamente.",
-      })
-    } finally {
-      setIsLoading(false)
+    // Crea el objeto que vas a enviar al POST
+    const registrationData: RegistrationData = {
+      user_id: formData.email,
+      password: formData.password,
+      tenant_id: "UDEMY",
+      nombre: nombre,
+      apellido: apellido,
+      idioma: "es",
+      telefono: formData.telefono,  // ✅ asegúrate de incluirlo
     }
+
+    // ✅ Agrega un console.log aquí
+    console.log("📦 Datos enviados al registro:", registrationData)
+
+    const response = await fetch("https://2ve7z54rvb.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(registrationData),
+    })
+
+    const result = await response.json()
+    console.log("📥 Respuesta de la API:", result)
+
+    if (response.ok) {
+      window.location.href = "/login"
+    } else {
+      setErrors({
+        general: result.response?.error || "Error en el registro. Intenta nuevamente.",
+      })
+    }
+  } catch (error) {
+    console.error("Registration error:", error)
+    setErrors({
+      general: "Error de conexión. Por favor intenta nuevamente.",
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   const handleSocialLogin = (provider: string): void => {
     // Implement social login logic here
@@ -208,20 +232,29 @@ export default function RegisterPage() {
             <form onSubmit={handleContinueWithEmail} className="space-y-4">
               {!showPasswordStep ? (
                 <>
-                  {/* Full Name Field */}
-                  <div>
-                    <input
-                      type="text"
-                      name="fullName"
-                      placeholder="Nombre completo"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border ${
-                        errors.fullName ? "border-red-300" : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
-                    />
-                    {errors.fullName && <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>}
-                  </div>
+                  {/* Nombre Field */}
+                    <div>
+                      <input
+                        type="text"
+                        name="nombre"
+                        placeholder="Nombre"
+                        value={formData.nombre}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                      />
+                    </div>
+
+                    {/* Apellido Field */}
+                    <div>
+                      <input
+                        type="text"
+                        name="apellido"
+                        placeholder="Apellido"
+                        value={formData.apellido}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                      />
+                    </div>
 
                   {/* Email Field */}
                   <div>
@@ -237,6 +270,21 @@ export default function RegisterPage() {
                     />
                     {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                   </div>
+
+                  {/* Telefono Field */}
+                    <div>
+                      <input
+                        type="tel"
+                        name="telefono"
+                        placeholder="Número de teléfono"
+                        value={formData.telefono}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border ${
+                          errors.telefono ? "border-red-300" : "border-gray-300"
+                        } rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                      />
+                      {errors.telefono && <p className="mt-1 text-sm text-red-600">{errors.telefono}</p>}
+                    </div>
 
                   {/* Offers Checkbox */}
                   <div className="flex items-start">
