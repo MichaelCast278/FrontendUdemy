@@ -184,7 +184,7 @@ export default function Header() {
                     Enseña en Udemy
                   </Link>
                   <Link
-                    to="/my-learning"
+                    to="/my-purchases"
                     className="hidden lg:inline-flex text-sm text-gray-700 hover:text-purple-600 font-medium"
                   >
                     Mi aprendizaje

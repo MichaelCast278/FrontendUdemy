@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import {
@@ -17,6 +16,7 @@ import {
   Share2,
   ShoppingCart,
   Check,
+  CheckCircle,
 } from "lucide-react"
 import PrivateLayout from "../layouts/PrivateLayout"
 import type { Course } from "../types/Course"
@@ -38,6 +38,16 @@ interface CourseDetail extends Course {
   subtitulos?: boolean
 }
 
+interface Purchase {
+  tenant_id: string
+  order_id: string
+  user_id: string
+  curso_id: string
+  quantity: number
+  price: number
+  timestamp: string
+}
+
 export default function CourseDetail() {
   const { courseId } = useParams<{ courseId: string }>()
   const [course, setCourse] = useState<CourseDetail | null>(null)
@@ -46,12 +56,51 @@ export default function CourseDetail() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [showAddedToCart, setShowAddedToCart] = useState(false)
-
+  const [isPurchased, setIsPurchased] = useState(false)
+  const [isCheckingPurchase, setIsCheckingPurchase] = useState(true)
   const { addItem, state: cartState } = useCart()
-  const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
+
+  const COURSES_API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
 
   // Check if course is already in cart
   const isInCart = course ? cartState.items.some((item) => item.curso_id === course.curso_id) : false
+
+  // Check if user has purchased this course
+  const checkIfPurchased = async () => {
+    if (!courseId) return
+
+    try {
+      setIsCheckingPurchase(true)
+      const token = localStorage.getItem("authToken")
+      const userId = localStorage.getItem("userId")
+
+      if (!userId || !token) {
+        setIsCheckingPurchase(false)
+        return
+      }
+
+      const response = await fetch(`${PURCHASES_API_BASE_URL}/compras?user_id=${userId}&limit=100`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const purchases: Purchase[] = data.compras || []
+        const hasPurchased = purchases.some((purchase) => purchase.curso_id === courseId)
+        setIsPurchased(hasPurchased)
+        console.log(`✅ Curso ${courseId} ${hasPurchased ? "YA FUE" : "NO FUE"} comprado`)
+      }
+    } catch (error) {
+      console.error("❌ Error al verificar compras:", error)
+    } finally {
+      setIsCheckingPurchase(false)
+    }
+  }
 
   const fetchCourseDetail = async () => {
     if (!courseId) return
@@ -59,9 +108,7 @@ export default function CourseDetail() {
     try {
       setIsLoading(true)
       const token = localStorage.getItem("authToken")
-      const tenantId = localStorage.getItem("tenantId")
-
-      const response = await fetch(`${API_BASE_URL}/cursos/${courseId}`, {
+      const response = await fetch(`${COURSES_API_BASE_URL}/cursos/${courseId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -86,7 +133,11 @@ export default function CourseDetail() {
   }
 
   useEffect(() => {
-    fetchCourseDetail()
+    const loadData = async () => {
+      await Promise.all([fetchCourseDetail(), checkIfPurchased()])
+    }
+
+    loadData()
   }, [courseId])
 
   const toggleSection = (section: string) => {
@@ -94,7 +145,7 @@ export default function CourseDetail() {
   }
 
   const handleAddToCart = () => {
-    if (!course || isInCart) return
+    if (!course || isInCart || isPurchased) return
 
     const cartItem = {
       curso_id: course.curso_id,
@@ -108,7 +159,6 @@ export default function CourseDetail() {
 
     addItem(cartItem)
     setShowAddedToCart(true)
-
     // Hide the "added to cart" message after 3 seconds
     setTimeout(() => {
       setShowAddedToCart(false)
@@ -119,7 +169,7 @@ export default function CourseDetail() {
     setIsWishlisted(!isWishlisted)
   }
 
-  if (isLoading) {
+  if (isLoading || isCheckingPurchase) {
     return (
       <PrivateLayout>
         <div className="min-h-screen bg-gray-50">
@@ -176,6 +226,16 @@ export default function CourseDetail() {
                   </div>
                 </nav>
 
+                {/* Purchased Badge */}
+                {isPurchased && (
+                  <div className="mb-4">
+                    <div className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Ya tienes este curso
+                    </div>
+                  </div>
+                )}
+
                 <h1 className="text-3xl lg:text-4xl font-bold mb-4">{course.nombre}</h1>
                 <p className="text-xl text-gray-300 mb-6">
                   {course.descripcion || "Aprende las habilidades más demandadas del mercado"}
@@ -206,7 +266,6 @@ export default function CourseDetail() {
                     <span>{course.duracion || "8 horas"} de contenido</span>
                   </div>
                 </div>
-
                 <p className="text-gray-300">
                   Creado por{" "}
                   <span className="text-purple-400 font-medium">{course.instructor || "Instructor Experto"}</span>
@@ -218,7 +277,7 @@ export default function CourseDetail() {
                 <div className="bg-white rounded-lg shadow-xl overflow-hidden sticky top-8">
                   <div className="relative">
                     <img
-                      src={course.imagen_url || "/placeholder.svg?height=200&width=400"}
+                      src={course.imagen_url || "/placeholder.svg?height=200&width=400&query=course+preview"}
                       alt={course.nombre}
                       className="w-full h-48 object-cover"
                     />
@@ -228,59 +287,71 @@ export default function CourseDetail() {
                       </button>
                     </div>
                   </div>
-
                   <div className="p-6">
-                    <div className="mb-4">
-                      <div className="flex items-baseline">
-                        <span className="text-3xl font-bold text-gray-900">${course.precio || "84.99"}</span>
-                        {course.precio_original && (
-                          <span className="text-lg text-gray-500 line-through ml-2">${course.precio_original}</span>
-                        )}
+                    {!isPurchased && (
+                      <div className="mb-4">
+                        <div className="flex items-baseline">
+                          <span className="text-3xl font-bold text-gray-900">${course.precio || "84.99"}</span>
+                          {course.precio_original && (
+                            <span className="text-lg text-gray-500 line-through ml-2">${course.precio_original}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div className="space-y-3">
-                      {/* Add to Cart Button */}
-                      <button
-                        onClick={handleAddToCart}
-                        disabled={isInCart}
-                        className={`w-full font-bold py-3 px-4 rounded transition-colors flex items-center justify-center ${
-                          isInCart
-                            ? "bg-green-600 text-white cursor-not-allowed"
-                            : showAddedToCart
-                              ? "bg-green-600 text-white"
-                              : "bg-purple-600 hover:bg-purple-700 text-white"
-                        }`}
-                      >
-                        {isInCart ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            En el carrito
-                          </>
-                        ) : showAddedToCart ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            ¡Añadido al carrito!
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Agregar al carrito
-                          </>
-                        )}
-                      </button>
+                      {/* Main Action Button */}
+                      {isPurchased ? (
+                        <button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded transition-colors flex items-center justify-center">
+                          <Play className="h-4 w-4 mr-2" />
+                          Continuar donde te quedaste
+                        </button>
+                      ) : (
+                        <>
+                          {/* Add to Cart Button */}
+                          <button
+                            onClick={handleAddToCart}
+                            disabled={isInCart}
+                            className={`w-full font-bold py-3 px-4 rounded transition-colors flex items-center justify-center ${
+                              isInCart
+                                ? "bg-green-600 text-white cursor-not-allowed"
+                                : showAddedToCart
+                                  ? "bg-green-600 text-white"
+                                  : "bg-purple-600 hover:bg-purple-700 text-white"
+                            }`}
+                          >
+                            {isInCart ? (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                En el carrito
+                              </>
+                            ) : showAddedToCart ? (
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                ¡Añadido al carrito!
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Agregar al carrito
+                              </>
+                            )}
+                          </button>
 
-                      {/* Go to Cart Button - Show when item is in cart */}
-                      {isInCart && (
-                        <Link
-                          to="/cart"
-                          className="w-full border-2 border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-3 px-4 rounded transition-colors flex items-center justify-center"
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          Ir al carrito
-                        </Link>
+                          {/* Go to Cart Button - Show when item is in cart */}
+                          {isInCart && (
+                            <Link
+                              to="/cart"
+                              className="w-full border-2 border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-3 px-4 rounded transition-colors flex items-center justify-center"
+                            >
+                              <ShoppingCart className="h-4 w-4 mr-2" />
+                              Ir al carrito
+                            </Link>
+                          )}
+                        </>
                       )}
 
+                      {/* Secondary Actions */}
                       <button
                         onClick={handleWishlist}
                         className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-3 px-4 rounded transition-colors flex items-center justify-center"
@@ -288,7 +359,6 @@ export default function CourseDetail() {
                         <Heart className={`h-4 w-4 mr-2 ${isWishlisted ? "fill-current text-red-500" : ""}`} />
                         {isWishlisted ? "En lista de deseos" : "Agregar a lista de deseos"}
                       </button>
-
                       <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-3 px-4 rounded transition-colors flex items-center justify-center">
                         <Share2 className="h-4 w-4 mr-2" />
                         Compartir

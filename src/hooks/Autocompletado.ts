@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 
-interface Suggestion {
+export interface Suggestion {
   nombre: string
   curso_id: string
 }

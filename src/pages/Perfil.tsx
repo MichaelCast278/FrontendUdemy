@@ -56,7 +56,7 @@ export default function Profile() {
     try {
       setIsLoading(true)
       const token = localStorage.getItem("authToken")
-      const tenantId = localStorage.getItem("tenantId")
+
 
       if (!token) {
         setError("Debes iniciar sesión para ver tu perfil")

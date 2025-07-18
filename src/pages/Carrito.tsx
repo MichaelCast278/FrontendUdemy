@@ -34,8 +34,9 @@ export default function Cart() {
           quantity: 1,
           price: item.precio,
         }
+        console.log("🚀 Enviando compra al backend:", body)
 
-        const response = await fetch(`https://gpbz7b06x2.execute-api.us-east-1.amazonaws.com/dev/compras`, {
+        const response = await fetch(`https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev/compras`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -92,29 +93,34 @@ export default function Cart() {
   }
 
   if (state.items.length === 0) {
-    return (
-      <PrivateLayout>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center py-16">
-              <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Tu carrito está vacío</h2>
-              <p className="text-gray-600 mb-8">
-                Explora nuestros cursos y añade algunos a tu carrito para comenzar tu aprendizaje
-              </p>
-              <Link
-                to="/dashboard"
-                className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Explorar Cursos
-              </Link>
+  return (
+        <PrivateLayout>
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="text-center py-16">
+                <ShoppingBag className="h-24 w-24 text-gray-400 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  {purchaseData ? '¡Gracias por tu compra!' : 'Tu carrito está vacío'}
+                </h2>
+                <p className="text-gray-600 mb-8">
+                  {purchaseData
+                    ? 'Puedes revisar tus productos adquiridos en la sección de Mis Cursos.'
+                    : 'Explora nuestros cursos y añade algunos a tu carrito para comenzar tu aprendizaje'}
+                </p>
+                <Link
+                  to={purchaseData ? "/my-learning" : "/dashboard"}
+                  className="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {purchaseData ? 'Ir a Mis Cursos' : 'Explorar Cursos'}
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </PrivateLayout>
-    )
-  }
+        </PrivateLayout>
+      )
+    }
+
 
   return (
     <PrivateLayout>

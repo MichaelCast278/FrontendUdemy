@@ -26,13 +26,13 @@ export default function MyPurchases() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE_URL = "https://ineyxuf8bd.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchPurchases = async () => {
     try {
       setIsLoading(true)
       const token = localStorage.getItem("authToken")
-      const tenantId = localStorage.getItem("tenantId")
+
       const userId = localStorage.getItem("userId")
 
       if (!userId) {
@@ -40,12 +40,12 @@ export default function MyPurchases() {
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/compras?tenant_id=${tenantId}&user_id=${userId}&limit=50`, {
+      const response = await fetch(`${API_BASE_URL}/compras?user_id=${userId}&limit=50`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `${token}`,
-          "tenant-id": tenantId || "",
+
         },
       })
 

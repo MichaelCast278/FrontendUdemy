@@ -6,6 +6,7 @@ interface CourseSectionProps {
   title: string
   courses: Course[]
   isLoading: boolean
+  purchasedCourseIds: Set<string>
 }
 
 export default function CourseSection({ title, courses, isLoading }: CourseSectionProps) {

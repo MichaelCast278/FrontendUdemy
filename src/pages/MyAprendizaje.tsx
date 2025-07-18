@@ -25,18 +25,18 @@ interface PurchasedCourse extends Course {
 
 export default function MyLearning() {
   const [purchasedCourses, setPurchasedCourses] = useState<PurchasedCourse[]>([])
-  const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [, setPurchases] = useState<Purchase[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
 
-  const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchPurchasesAndCourses = async () => {
     try {
       setIsLoading(true)
       const token = localStorage.getItem("authToken")
-      const tenantId = localStorage.getItem("tenantId")
+      
       const userId = localStorage.getItem("userId")
 
       if (!userId) {
@@ -46,7 +46,7 @@ export default function MyLearning() {
 
       // 1. Obtener compras del usuario
       const purchasesResponse = await fetch(
-        `${API_BASE_URL}/cursos?user_id=${userId}&limit=50`,
+        `${API_BASE_URL}/compras?user_id=${userId}`,
         {
           method: "GET",
           headers: {
@@ -72,7 +72,7 @@ export default function MyLearning() {
             headers: {
               "Content-Type": "application/json",
               Authorization: `${token}`,
-              "tenant-id": tenantId || "",
+      
             },
           })
 
