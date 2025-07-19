@@ -29,8 +29,8 @@ export default function MyLearning() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
 
-  const PURCHASES_API_BASE_URL = "https://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
-  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchPurchasesAndCourses = async () => {
     try {

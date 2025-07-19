@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import Carousel from "../components/Carousel"
+import CourseCard from "../components/CourseCard"
 import PublicLayout from "../layouts/PublicLayout"
 import type { Course } from "../types/Course"
-import { Star, Users, Clock, Play } from "lucide-react"
+import CourseCardWithTooltip from "../components/Tooltip"
 
 interface ApiResponse {
   message: string
@@ -13,15 +14,13 @@ interface ApiResponse {
 }
 
 export default function HomePage() {
-  // Eliminar esta línea:
-  //const [allCourses, setAllCourses] = useState<Course[]>([])
   const [coursesByCategory, setCoursesByCategory] = useState<Record<string, Course[]>>({})
   const [selectedCategory, setSelectedCategory] = useState<string>("todos")
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const navigate = useNavigate()
 
   // Base URL for API
-  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
 
   // Mapeo de categorías para títulos más amigables
   const categoryTitles: Record<string, string> = {
@@ -94,8 +93,6 @@ export default function HomePage() {
       return []
     }
   }
-
-  // Eliminar la función `fetchAllCourses` completamente.
 
   // Load courses by categories
   const loadCoursesByCategories = async () => {
@@ -283,66 +280,14 @@ export default function HomePage() {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {displayedCourses.map((course) => (
-                  <div
+                  <CourseCardWithTooltip
                     key={course.curso_id}
-                    onClick={() => handleCourseClick(course.curso_id)}
-                    className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                    course={course}
+                    onCourseClick={handleCourseClick}
+                    showTooltip={true}
                   >
-                    <div className="relative">
-                      <img
-                        src={
-                          course.imagen_url && course.imagen_url.startsWith("http")
-                            ? course.imagen_url
-                            : "/placeholder.svg?height=160&width=300&query=course+thumbnail"
-                        }
-                        alt={course.nombre}
-                        className="w-full h-40 object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg?height=160&width=300"
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
-                        <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                        {course.nombre}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">{course.instructor || "Instructor"}</p>
-                      <div className="flex items-center mb-2">
-                        <span className="text-yellow-500 text-sm font-semibold mr-1">{course.rating || 4.5}</span>
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3 w-3 ${
-                                i < Math.floor(course.rating || 4.5) ? "text-yellow-400 fill-current" : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-500 ml-2">({course.estudiantes || "1,234"})</span>
-                      </div>
-                      <div className="flex items-center text-xs text-gray-500 mb-3">
-                        <Clock className="h-3 w-3 mr-1" />
-                        <span>{course.duracion || "8 horas"}</span>
-                        <Users className="h-3 w-3 ml-3 mr-1" />
-                        <span>{course.nivel || "Principiante"}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-bold text-gray-900">${course.precio || 84.99}</span>
-                        </div>
-                        {course.categories?.length > 0 && (
-                          <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                            {course.categories[0]}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                    <CourseCard course={course} />
+                  </CourseCardWithTooltip>
                 ))}
               </div>
             )}
@@ -368,42 +313,14 @@ export default function HomePage() {
               <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">⭐ Cursos más valorados</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {featuredCourses.map((course) => (
-                  <div
+                  <CourseCardWithTooltip
                     key={course.curso_id}
-                    onClick={() => handleCourseClick(course.curso_id)}
-                    className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                    course={course}
+                    onCourseClick={handleCourseClick}
+                    showTooltip={true}
                   >
-                    <div className="relative">
-                      <img
-                        src={
-                          course.imagen_url && course.imagen_url.startsWith("http")
-                            ? course.imagen_url
-                            : "/placeholder.svg?height=160&width=300&query=featured+course"
-                        }
-                        alt={course.nombre}
-                        className="w-full h-32 object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg?height=160&width=300"
-                        }}
-                      />
-                      <div className="absolute top-2 left-2">
-                        <span className="bg-yellow-400 text-yellow-900 px-2 py-1 rounded text-xs font-medium">
-                          ⭐ {course.rating || 4.5}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2 group-hover:text-purple-600 transition-colors">
-                        {course.nombre}
-                      </h3>
-                      <p className="text-xs text-gray-600 mb-1">{course.instructor}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-gray-900">${course.precio || 84.99}</span>
-                        <span className="text-xs text-gray-500">({course.estudiantes || "1K"} estudiantes)</span>
-                      </div>
-                    </div>
-                  </div>
+                    <CourseCard course={course} />
+                  </CourseCardWithTooltip>
                 ))}
               </div>
             </div>

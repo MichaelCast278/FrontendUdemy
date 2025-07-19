@@ -4,8 +4,12 @@ import PrivateLayout from "../layouts/PrivateLayout"
 import CarruselProBotones from "../components/CarouselLogin"
 import type { Course } from "../types/Course"
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { ChevronLeft, ChevronRight, Star, Users, Clock, Play, CheckCircle, ArrowRight } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react"
+
+// Importar los componentes necesarios
+import CourseCardWithTooltip from "../components/Tooltip"
+import CourseCardEnhanced from "../components/CourseCard"
 
 interface ApiResponse {
   message: string
@@ -43,6 +47,7 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({
   maxCourses = 20,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const navigate = useNavigate()
   const coursesPerView = 4
 
   // Limitar cursos según maxCourses
@@ -56,6 +61,11 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({
     setCurrentIndex((prev) =>
       prev - coursesPerView < 0 ? Math.max(0, limitedCourses.length - coursesPerView) : prev - coursesPerView,
     )
+  }
+
+  // Handle course click - navigate to course detail
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/course/${courseId}`)
   }
 
   if (isLoading) {
@@ -153,104 +163,15 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({
             const isPurchased = purchasedCourseIds.has(course.curso_id)
 
             return (
-              <div
+              <CourseCardWithTooltip
                 key={course.curso_id}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow group relative bg-white"
+                course={course}
+                showTooltip={true}
+                onCourseClick={handleCourseClick}
+                isPurchased={isPurchased}
               >
-                {/* Purchased Badge */}
-                {isPurchased && (
-                  <div className="absolute top-2 right-2 z-10">
-                    <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center shadow-sm">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Comprado
-                    </div>
-                  </div>
-                )}
-
-                <Link to={`/course/${course.curso_id}`} className="block">
-                  <div className="relative">
-                    <img
-                      src={
-                        course.imagen_url && course.imagen_url.startsWith("http")
-                          ? course.imagen_url
-                          : "/placeholder.svg?height=160&width=300&query=course+thumbnail"
-                      }
-                      alt={course.nombre}
-                      className="w-full h-40 object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement
-                        target.src = "/placeholder.svg?height=160&width=300"
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
-                      <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="p-4">
-                  <Link to={`/course/${course.curso_id}`}>
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-purple-600 transition-colors">
-                      {course.nombre}
-                    </h3>
-                  </Link>
-                  <p className="text-sm text-gray-600 mb-2">{course.instructor || "Instructor"}</p>
-
-                  {/* Rating */}
-                  <div className="flex items-center mb-2">
-                    <span className="text-yellow-500 text-sm font-semibold mr-1">{course.rating || 4.5}</span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${
-                            i < Math.floor(course.rating || 4.5) ? "text-yellow-400 fill-current" : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-gray-500 ml-2">({course.estudiantes || "1,234"})</span>
-                  </div>
-
-                  {/* Course info */}
-                  <div className="flex items-center text-xs text-gray-500 mb-3">
-                    <Clock className="h-3 w-3 mr-1" />
-                    <span>{course.duracion || "8 horas"}</span>
-                    <Users className="h-3 w-3 ml-3 mr-1" />
-                    <span>{course.nivel || "Principiante"}</span>
-                  </div>
-
-                  {/* Price and category */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <span className="font-bold text-gray-900">${course.precio || 84.99}</span>
-                    </div>
-                    {course.categories?.length > 0 && (
-                      <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
-                        {course.categories[0]}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Action Button */}
-                  {isPurchased ? (
-                    <Link
-                      to={`/course/${course.curso_id}`}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center text-sm"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Continuar aprendiendo
-                    </Link>
-                  ) : (
-                    <Link
-                      to={`/course/${course.curso_id}`}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center text-sm"
-                    >
-                      Ver detalles
-                    </Link>
-                  )}
-                </div>
-              </div>
+                <CourseCardEnhanced course={course} isPurchased={isPurchased} />
+              </CourseCardWithTooltip>
             )
           })}
         </div>
@@ -262,13 +183,13 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({
 export default function Dashboard() {
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [coursesByCategory, setCoursesByCategory] = useState<Record<string, Course[]>>({})
-  const [, setPurchases] = useState<Purchase[]>([])
+  const [purchases, setPurchases] = useState<Purchase[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [purchasedCourseIds, setPurchasedCourseIds] = useState<Set<string>>(new Set())
 
   // Base URLs for APIs
-  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
-  const PURCHASES_API_BASE_URL = "https://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev"
 
   // Mapeo de categorías para títulos más amigables
   const categoryTitles: Record<string, string> = {
@@ -291,21 +212,21 @@ export default function Dashboard() {
 
   // Iconos para cada categoría
   const categoryIcons: Record<string, string> = {
-    "desarrollo web": "",
-    "full stack": "",
-    negocios: "",
-    management: "",
-    devops: "",
-    kubernetes: "",
-    docker: "",
-    seguridad: "",
-    cybersecurity: "",
-    móvil: "",
-    ios: "",
-    flutter: "",
-    diseño: "",
-    gráfico: "",
-    programación: "",
+    "desarrollo web": "🌐",
+    "full stack": "⚡",
+    negocios: "💼",
+    management: "👔",
+    devops: "🚀",
+    kubernetes: "☸️",
+    docker: "🐳",
+    seguridad: "🔒",
+    cybersecurity: "🛡️",
+    móvil: "📱",
+    ios: "🍎",
+    flutter: "🦋",
+    diseño: "🎨",
+    gráfico: "🖼️",
+    programación: "💻",
   }
 
   // Fetch user purchases
@@ -352,7 +273,7 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("authToken")
       const categoryFormatted = capitalize(category)
-      const tenantId = 'UDEMY'
+      const tenantId = "UDEMY"
       const url = `${COURSES_API_BASE_URL}/cursos/category?category=${encodeURIComponent(categoryFormatted)}&tenant_id=${tenantId}`
 
       console.log(`📡 Fetching courses for category: ${categoryFormatted}`)
@@ -383,7 +304,8 @@ export default function Dashboard() {
   const fetchAllCourses = async () => {
     try {
       const token = localStorage.getItem("authToken")
-      const url = `${COURSES_API_BASE_URL}/cursos`
+      const tenantId = "UDEMY"
+      const url = `${COURSES_API_BASE_URL}/cursos?tenant_id=${tenantId}`
 
       const response = await fetch(url, {
         method: "GET",
@@ -416,20 +338,27 @@ export default function Dashboard() {
       // Primero obtenemos todos los cursos para tener una vista general
       const allCoursesData = await fetchAllCourses()
 
-      // Extraer todas las categorías únicas de los cursos
-      const uniqueCategories = new Set<string>()
-      allCoursesData.forEach((course) => {
-        if (course.categories) {
-          course.categories.forEach((cat) => {
-            uniqueCategories.add(cat.toLowerCase().trim())
-          })
-        }
-      })
-
-      console.log("🏷️ Categorías encontradas:", Array.from(uniqueCategories))
+      // Lista de categorías predefinidas para consultar
+      const predefinedCategories = [
+        "desarrollo web",
+        "full stack",
+        "negocios",
+        "management",
+        "devops",
+        "kubernetes",
+        "docker",
+        "seguridad",
+        "cybersecurity",
+        "móvil",
+        "ios",
+        "flutter",
+        "diseño",
+        "gráfico",
+        "programación",
+      ]
 
       // Fetch courses for each category
-      const categoryPromises = Array.from(uniqueCategories).map(async (category) => {
+      const categoryPromises = predefinedCategories.map(async (category) => {
         const courses = await fetchCoursesByCategory(category)
         return { category, courses }
       })

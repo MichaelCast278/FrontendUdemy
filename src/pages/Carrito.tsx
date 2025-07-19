@@ -36,7 +36,7 @@ export default function Cart() {
         }
         console.log("🚀 Enviando compra al backend:", body)
 
-        const response = await fetch(`https://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev/compras`, {
+        const response = await fetch(`https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

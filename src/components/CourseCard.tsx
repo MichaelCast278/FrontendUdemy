@@ -1,150 +1,129 @@
 "use client"
-
-import { Link } from "react-router-dom"
-import { Star, Clock, Users, CheckCircle, Lock, Play } from "lucide-react"
+import { Star, Users, Clock, Play, CheckCircle } from "lucide-react"
+import CourseTooltip from "./Tooltip"
 import type { Course } from "../types/Course"
 
-interface CourseCardProps {
+interface CourseCardWithTooltipProps {
   course: Course
   isPurchased?: boolean
-  progress?: number
-  showProgress?: boolean
+  onCourseClick?: (courseId: string) => void // ← Agregar esta propiedad
+  showTooltip?: boolean
+  className?: string
 }
 
-export default function CourseCardEnhanced({
+export default function CourseCardWithTooltip({
   course,
   isPurchased = false,
-  progress = 0,
-  showProgress = false,
-}: CourseCardProps) {
-  const firstCategory = course.categories?.[0] || "General"
-  const estrellasLlenas = Math.floor(course.rating ?? 4.5)
+  onCourseClick,
+  showTooltip = true,
+  className = "",
+}: CourseCardWithTooltipProps) {
+  const handleClick = () => {
+    if (onCourseClick) {
+      onCourseClick(course.curso_id)
+    }
+  }
 
-  return (
-    <Link
-      to={isPurchased ? `/course/${course.curso_id}/learn` : `/course/${course.curso_id}`}
-      className={`bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group relative ${
-        isPurchased ? "border-green-200 shadow-sm ring-1 ring-green-100" : "border-gray-200"
-      }`}
+  const courseCard = (
+    <div
+      onClick={handleClick}
+      className={`border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow group relative bg-white cursor-pointer ${className}`}
     >
       {/* Purchased Badge */}
       {isPurchased && (
         <div className="absolute top-2 right-2 z-10">
-          <div className="bg-green-500 text-white rounded-full p-1">
-            <CheckCircle className="h-4 w-4" />
+          <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center shadow-sm">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Comprado
           </div>
         </div>
       )}
 
       <div className="relative">
         <img
-          src={course.imagen_url || "/placeholder.jpg"}
+          src={
+            course.imagen_url && course.imagen_url.startsWith("http")
+              ? course.imagen_url
+              : "/placeholder.svg?height=160&width=300&query=course+thumbnail"
+          }
           alt={course.nombre}
-          className={`w-full h-48 object-cover transition-all ${isPurchased ? "opacity-100" : "opacity-90"}`}
+          className="w-full h-40 object-cover"
           onError={(e) => {
             const target = e.target as HTMLImageElement
-            target.src = "/placeholder.jpg"
+            target.src = "/placeholder.svg?height=160&width=300"
           }}
         />
-
-        {/* Category Badge */}
-        <div className="absolute top-2 left-2">
-          <span
-            className={`text-white text-xs font-medium px-2 py-1 rounded ${
-              isPurchased ? "bg-green-600" : "bg-purple-600"
-            }`}
-          >
-            {firstCategory}
-          </span>
+        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
+          <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-
-        {/* Overlay */}
-        <div
-          className={`absolute inset-0 bg-black transition-opacity flex items-center justify-center ${
-            isPurchased ? "bg-opacity-0 group-hover:bg-opacity-20" : "bg-opacity-0 group-hover:bg-opacity-30"
-          }`}
-        >
-          {isPurchased ? (
-            <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-          ) : (
-            <Lock className="h-8 w-8 text-white opacity-0 group-hover:opacity-70 transition-opacity" />
-          )}
-        </div>
-
-        {/* Progress Bar for purchased courses */}
-        {isPurchased && showProgress && progress > 0 && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2">
-            <div className="w-full bg-gray-300 rounded-full h-1">
-              <div className="bg-green-500 h-1 rounded-full transition-all" style={{ width: `${progress}%` }}></div>
-            </div>
-            <p className="text-white text-xs mt-1">{progress}% completado</p>
-          </div>
-        )}
       </div>
 
       <div className="p-4">
-        <h3 className={`font-bold mb-2 text-sm line-clamp-2 ${isPurchased ? "text-green-900" : "text-gray-900"}`}>
+        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
           {course.nombre}
         </h3>
-
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.descripcion}</p>
+        <p className="text-sm text-gray-600 mb-2">{course.instructor || "Instructor"}</p>
 
         {/* Rating */}
         <div className="flex items-center mb-2">
-          <span className="text-yellow-600 text-sm font-bold mr-1">{course.rating ?? 4.5}</span>
-          <div className="flex mr-1">
+          <span className="text-yellow-500 text-sm font-semibold mr-1">{course.rating || 4.5}</span>
+          <div className="flex">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`h-3 w-3 ${i < estrellasLlenas ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                className={`h-3 w-3 ${
+                  i < Math.floor(course.rating || 4.5) ? "text-yellow-400 fill-current" : "text-gray-300"
+                }`}
               />
             ))}
           </div>
-          <span className="text-xs text-gray-500">({course.estudiantes ?? "1,234"})</span>
+          <span className="text-xs text-gray-500 ml-2">({course.estudiantes || "1,234"})</span>
         </div>
 
-        {/* Duration and Level */}
+        {/* Course info */}
         <div className="flex items-center text-xs text-gray-500 mb-3">
           <Clock className="h-3 w-3 mr-1" />
-          <span className="mr-3">{course.duracion}</span>
-          <Users className="h-3 w-3 mr-1" />
-          <span>{course.nivel ?? "Principiante"}</span>
+          <span>{course.duracion || "8 horas"}</span>
+          <Users className="h-3 w-3 ml-3 mr-1" />
+          <span>{course.nivel || "Principiante"}</span>
         </div>
 
-        {/* Price and Status */}
-        <div className="flex items-center justify-between">
-          <div>
-            {isPurchased ? (
-              <span className="font-bold text-green-600 text-sm">✓ Adquirido</span>
-            ) : (
-              <span className="font-bold text-gray-900">${course.precio}</span>
+        {/* Price and category */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <span className="font-bold text-gray-900">${course.precio || 84.99}</span>
+            {course.precio_original && course.precio_original > course.precio && (
+              <span className="text-sm text-gray-500 line-through ml-2">${course.precio_original}</span>
             )}
           </div>
-
-          <div className="flex flex-wrap gap-1">
-            {course.categories?.slice(0, 2).map((cat, index) => (
-              <span
-                key={index}
-                className={`text-xs px-2 py-1 rounded ${
-                  isPurchased ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {cat}
-              </span>
-            ))}
-          </div>
+          {course.categories?.length > 0 && (
+            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{course.categories[0]}</span>
+          )}
         </div>
 
         {/* Action Button */}
-        {isPurchased && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <button className="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors flex items-center justify-center">
-              <Play className="h-4 w-4 mr-2" />
-              {progress === 0 ? "Empezar curso" : "Continuar aprendiendo"}
-            </button>
-          </div>
+        {isPurchased ? (
+          <button className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center text-sm">
+            <Play className="h-4 w-4 mr-2" />
+            Continuar aprendiendo
+          </button>
+        ) : (
+          <button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded transition-colors flex items-center justify-center text-sm">
+            Ver detalles
+          </button>
         )}
       </div>
-    </Link>
+    </div>
   )
+
+  // Wrap with tooltip if enabled
+  if (showTooltip) {
+    return (
+      <CourseTooltip course={course} isPurchased={isPurchased} className={className}>
+        {courseCard}
+      </CourseTooltip>
+    )
+  }
+
+  return courseCard
 }

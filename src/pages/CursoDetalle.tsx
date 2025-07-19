@@ -63,8 +63,8 @@ export default function CourseDetail() {
   const [exploreCoursesData, setExploreCoursesData] = useState<Record<string, Course[]>>({})
   const [isLoadingExplore, setIsLoadingExplore] = useState(false)
 
-  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
-  const PURCHASES_API_BASE_URL = "http://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev"
 
   // Categorías disponibles para explorar
   const availableCategories = [
