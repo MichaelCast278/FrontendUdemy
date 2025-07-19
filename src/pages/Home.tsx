@@ -20,7 +20,7 @@ export default function HomePage() {
   const navigate = useNavigate()
 
   // Base URL for API
-  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://y8h2ktpj0j.execute-api.us-east-1.amazonaws.com/dev"
 
   // Mapeo de categorías para títulos más amigables
   const categoryTitles: Record<string, string> = {

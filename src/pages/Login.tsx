@@ -85,7 +85,7 @@ export default function LoginPage() {
       tenant_id: "UDEMY",
     }
 
-    const response = await fetch("https://7cw5nz42d8.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
+    const response = await fetch("https://kxwodn8qhf.execute-api.us-east-1.amazonaws.com/dev/usuarios/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

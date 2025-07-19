@@ -36,7 +36,7 @@ export default function Cart() {
         }
         console.log("🚀 Enviando compra al backend:", body)
 
-        const response = await fetch(`https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev`, {
+        const response = await fetch(`https://sxaiwtfebc.execute-api.us-east-1.amazonaws.com/dev/compras`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -64,7 +64,7 @@ export default function Cart() {
         amount: state.total,
       })
 
-      // Clear cart after successful purchase
+      // Clear cart after successful purchase 
       clearCart()
       setIsPurchaseModalOpen(true)
 

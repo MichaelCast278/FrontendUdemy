@@ -13,7 +13,7 @@ export function useAutocomplete(debounceMs = 300) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://y8h2ktpj0j.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchSuggestions = useCallback(async (query: string) => {
   if (query.length < 2) {

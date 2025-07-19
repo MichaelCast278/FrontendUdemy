@@ -50,7 +50,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState<Partial<UserProfile>>({})
 
-  const API_BASE_URL = "https://7cw5nz42d8.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://kxwodn8qhf.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchUserProfile = async () => {
     try {

@@ -188,8 +188,8 @@ export default function Dashboard() {
   const [purchasedCourseIds, setPurchasedCourseIds] = useState<Set<string>>(new Set())
 
   // Base URLs for APIs
-  const COURSES_API_BASE_URL = "https://fk3gs8f1z1.execute-api.us-east-1.amazonaws.com/dev"
-  const PURCHASES_API_BASE_URL = "https://qek7hwbtb8.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://y8h2ktpj0j.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://sxaiwtfebc.execute-api.us-east-1.amazonaws.com/dev"
 
   // Mapeo de categorías para títulos más amigables
   const categoryTitles: Record<string, string> = {
