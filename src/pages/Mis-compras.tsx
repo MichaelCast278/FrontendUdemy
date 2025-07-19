@@ -26,7 +26,7 @@ export default function MyPurchases() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
+  const API_BASE_URL = "https://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
 
   const fetchPurchases = async () => {
     try {

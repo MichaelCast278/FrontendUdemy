@@ -262,13 +262,13 @@ const CourseCarousel: React.FC<CourseCarouselProps> = ({
 export default function Dashboard() {
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [coursesByCategory, setCoursesByCategory] = useState<Record<string, Course[]>>({})
-  const [purchases, setPurchases] = useState<Purchase[]>([])
+  const [, setPurchases] = useState<Purchase[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [purchasedCourseIds, setPurchasedCourseIds] = useState<Set<string>>(new Set())
 
   // Base URLs for APIs
-  const COURSES_API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
-  const PURCHASES_API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "https://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
 
   // Mapeo de categorías para títulos más amigables
   const categoryTitles: Record<string, string> = {
@@ -291,21 +291,21 @@ export default function Dashboard() {
 
   // Iconos para cada categoría
   const categoryIcons: Record<string, string> = {
-    "desarrollo web": "🌐",
-    "full stack": "⚡",
-    negocios: "💼",
-    management: "👔",
-    devops: "🚀",
-    kubernetes: "☸️",
-    docker: "🐳",
-    seguridad: "🔒",
-    cybersecurity: "🛡️",
-    móvil: "📱",
-    ios: "🍎",
-    flutter: "🦋",
-    diseño: "🎨",
-    gráfico: "🖼️",
-    programación: "💻",
+    "desarrollo web": "",
+    "full stack": "",
+    negocios: "",
+    management: "",
+    devops: "",
+    kubernetes: "",
+    docker: "",
+    seguridad: "",
+    cybersecurity: "",
+    móvil: "",
+    ios: "",
+    flutter: "",
+    diseño: "",
+    gráfico: "",
+    programación: "",
   }
 
   // Fetch user purchases
@@ -352,7 +352,8 @@ export default function Dashboard() {
     try {
       const token = localStorage.getItem("authToken")
       const categoryFormatted = capitalize(category)
-      const url = `${COURSES_API_BASE_URL}/cursos/category?category=${encodeURIComponent(categoryFormatted)}`
+      const tenantId = 'UDEMY'
+      const url = `${COURSES_API_BASE_URL}/cursos/category?category=${encodeURIComponent(categoryFormatted)}&tenant_id=${tenantId}`
 
       console.log(`📡 Fetching courses for category: ${categoryFormatted}`)
 

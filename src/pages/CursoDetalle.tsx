@@ -59,9 +59,135 @@ export default function CourseDetail() {
   const [isPurchased, setIsPurchased] = useState(false)
   const [isCheckingPurchase, setIsCheckingPurchase] = useState(true)
   const { addItem, state: cartState } = useCart()
+  const [randomCategories, setRandomCategories] = useState<string[]>([])
+  const [exploreCoursesData, setExploreCoursesData] = useState<Record<string, Course[]>>({})
+  const [isLoadingExplore, setIsLoadingExplore] = useState(false)
 
-  const COURSES_API_BASE_URL = "https://t1uohu23vl.execute-api.us-east-1.amazonaws.com/dev"
-  const PURCHASES_API_BASE_URL = "https://ndq8jajcld.execute-api.us-east-1.amazonaws.com/dev"
+  const COURSES_API_BASE_URL = "https://z7al4k2umc.execute-api.us-east-1.amazonaws.com/dev"
+  const PURCHASES_API_BASE_URL = "http://y4bndl0fk1.execute-api.us-east-1.amazonaws.com/dev"
+
+  // Categorías disponibles para explorar
+  const availableCategories = [
+    "desarrollo web",
+    "full stack",
+    "negocios",
+    "management",
+    "devops",
+    "kubernetes",
+    "docker",
+    "seguridad",
+    "cybersecurity",
+    "móvil",
+    "ios",
+    "flutter",
+    "diseño",
+    "gráfico",
+    "programación",
+  ]
+
+  const categoryTitles: Record<string, string> = {
+    "desarrollo web": "Desarrollo Web",
+    "full stack": "Full Stack Development",
+    negocios: "Negocios Digitales",
+    management: "Management y Liderazgo",
+    devops: "DevOps y Cloud",
+    kubernetes: "Kubernetes",
+    docker: "Docker",
+    seguridad: "Ciberseguridad",
+    cybersecurity: "Cybersecurity",
+    móvil: "Desarrollo Móvil",
+    ios: "Desarrollo iOS",
+    flutter: "Flutter",
+    diseño: "Diseño",
+    gráfico: "Diseño Gráfico",
+    programación: "Programación",
+  }
+
+  const categoryIcons: Record<string, string> = {
+    "desarrollo web": "🌐",
+    "full stack": "⚡",
+    negocios: "💼",
+    management: "👔",
+    devops: "🚀",
+    kubernetes: "☸️",
+    docker: "🐳",
+    seguridad: "🔒",
+    cybersecurity: "🛡️",
+    móvil: "📱",
+    ios: "🍎",
+    flutter: "🦋",
+    diseño: "🎨",
+    gráfico: "🖼️",
+    programación: "💻",
+  }
+
+  // Función para obtener categorías aleatorias
+  const getRandomCategories = (exclude?: string[]) => {
+    const filtered = availableCategories.filter((cat) => !exclude?.includes(cat))
+    const shuffled = [...filtered].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, 3)
+  }
+
+  // Función para obtener cursos por categoría
+  const fetchCoursesByCategory = async (category: string) => {
+    try {
+      const categoryFormatted = category.charAt(0).toUpperCase() + category.slice(1)
+      const tenantId = "UDEMY"
+      const url = `${COURSES_API_BASE_URL}/cursos/category?category=${encodeURIComponent(categoryFormatted)}&tenant_id=${tenantId}`
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return data.cursos || []
+      } else {
+        console.error(`❌ Error fetching ${categoryFormatted}:`, response.status)
+        return []
+      }
+    } catch (error) {
+      console.error(`❌ Error al hacer fetch de ${category}:`, error)
+      return []
+    }
+  }
+
+  // Función para cargar cursos de exploración
+  const loadExploreCourses = async () => {
+    try {
+      setIsLoadingExplore(true)
+
+      // Obtener categorías aleatorias excluyendo la categoría actual del curso
+      const currentCategories = course?.categories || []
+      const randomCats = getRandomCategories(currentCategories)
+      setRandomCategories(randomCats)
+
+      // Fetch cursos para cada categoría aleatoria
+      const categoryPromises = randomCats.map(async (category) => {
+        const courses = await fetchCoursesByCategory(category)
+        return { category, courses: courses.slice(0, 4) } // Solo 4 cursos por categoría
+      })
+
+      const categoryResults = await Promise.all(categoryPromises)
+
+      // Organizar datos
+      const exploreData: Record<string, Course[]> = {}
+      categoryResults.forEach(({ category, courses }) => {
+        if (courses.length > 0) {
+          exploreData[category] = courses
+        }
+      })
+
+      setExploreCoursesData(exploreData)
+    } catch (error) {
+      console.error("❌ Error loading explore courses:", error)
+    } finally {
+      setIsLoadingExplore(false)
+    }
+  }
 
   // Check if course is already in cart
   const isInCart = course ? cartState.items.some((item) => item.curso_id === course.curso_id) : false
@@ -139,6 +265,13 @@ export default function CourseDetail() {
 
     loadData()
   }, [courseId])
+
+  // Nuevo useEffect para cargar cursos de exploración cuando el curso esté cargado
+  useEffect(() => {
+    if (course && !isLoading) {
+      loadExploreCourses()
+    }
+  }, [course, isLoading])
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section)
@@ -500,6 +633,128 @@ export default function CourseDetail() {
             </div>
           </div>
         </section>
+
+        {/* Explore More Courses */}
+        {!isLoadingExplore && randomCategories.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Explora más cursos</h2>
+              <p className="text-lg text-gray-600">Descubre otros cursos que podrían interesarte</p>
+            </div>
+
+            {randomCategories.map((category) => {
+              const courses = exploreCoursesData[category] || []
+              if (courses.length === 0) return null
+
+              const title = categoryTitles[category] || category.charAt(0).toUpperCase() + category.slice(1)
+              const icon = categoryIcons[category] || "📚"
+
+              return (
+                <div key={category} className="mb-12">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                      <span className="mr-3 text-3xl">{icon}</span>
+                      {title}
+                    </h3>
+                    <Link
+                      to={`/category/${category.toLowerCase().replace(/\s+/g, "-")}`}
+                      className="text-purple-600 hover:text-purple-800 font-medium text-sm flex items-center"
+                    >
+                      Ver todos
+                      <ChevronDown className="h-4 w-4 ml-1 rotate-[-90deg]" />
+                    </Link>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {courses.map((exploreCourse) => (
+                      <Link
+                        key={exploreCourse.curso_id}
+                        to={`/course/${exploreCourse.curso_id}`}
+                        className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow group"
+                      >
+                        <div className="relative">
+                          <img
+                            src={
+                              exploreCourse.imagen_url && exploreCourse.imagen_url.startsWith("http")
+                                ? exploreCourse.imagen_url
+                                : "/placeholder.svg?height=160&width=300&query=course+thumbnail"
+                            }
+                            alt={exploreCourse.nombre}
+                            className="w-full h-40 object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = "/placeholder.svg?height=160&width=300"
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
+                            <Play className="h-12 w-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-purple-600 transition-colors">
+                            {exploreCourse.nombre}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-2">{exploreCourse.instructor || "Instructor"}</p>
+                          <div className="flex items-center mb-2">
+                            <span className="text-yellow-500 text-sm font-semibold mr-1">
+                              {exploreCourse.rating || 4.5}
+                            </span>
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${
+                                    i < Math.floor(exploreCourse.rating || 4.5)
+                                      ? "text-yellow-400 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500 ml-2">({exploreCourse.estudiantes || "1,234"})</span>
+                          </div>
+                          <div className="flex items-center text-xs text-gray-500 mb-3">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>{exploreCourse.duracion || "8 horas"}</span>
+                            <Users className="h-3 w-3 ml-3 mr-1" />
+                            <span>{exploreCourse.nivel || "Principiante"}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-gray-900">${exploreCourse.precio || 84.99}</span>
+                            {exploreCourse.categories?.length > 0 && (
+                              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                {exploreCourse.categories[0]}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </section>
+        )}
+
+        {/* Loading state for explore courses */}
+        {isLoadingExplore && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-gray-50">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Explora más cursos</h2>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, index) => (
+                <div key={index} className="animate-pulse bg-white rounded-lg p-4">
+                  <div className="bg-gray-300 h-40 rounded-lg mb-4"></div>
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded mb-2 w-3/4"></div>
+                  <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </PrivateLayout>
   )

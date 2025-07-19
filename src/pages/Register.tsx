@@ -151,7 +151,7 @@ export default function RegisterPage() {
     // ✅ Agrega un console.log aquí
     console.log("📦 Datos enviados al registro:", registrationData)
 
-    const response = await fetch("https://2ve7z54rvb.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
+    const response = await fetch("https://f938pi8zxl.execute-api.us-east-1.amazonaws.com/dev/usuarios/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
